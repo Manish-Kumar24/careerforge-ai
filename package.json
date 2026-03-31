@@ -1,10 +1,6 @@
 {
   "name": "ai-interview-tracker",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
     "dev": "concurrently \"npm run dev -w backend\" \"npm run dev -w frontend\""
   },
