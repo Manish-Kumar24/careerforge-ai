@@ -1,0 +1,71 @@
+
+D:\Project\ai-interview-tracker>tree /f
+Folder PATH listing
+Volume serial number is BC25-2559
+D:.
+│   .env.example
+│   docker-compose.yml
+│   package-lock.json
+│   package.json
+│   README.md
+│   setup.py
+│
+├───apps
+│   ├───backend
+│   │   │   package-lock.json
+│   │   │   package.json
+│   │   │   tsconfig.json
+│   │   │
+│   │   └───src
+│   │       │   server.ts
+│   │       │
+│   │       ├───config
+│   │       │       db.ts
+│   │       │
+│   │       ├───controllers
+│   │       │       ai.controller.ts
+│   │       │       auth.controller.ts
+│   │       │
+│   │       ├───middleware
+│   │       ├───models
+│   │       │       Interview.ts
+│   │       │       User.ts
+│   │       │
+│   │       ├───routes
+│   │       │       ai.routes.ts
+│   │       │
+│   │       ├───services
+│   │       │       ai.service.ts
+│   │       │
+│   │       └───utils
+│   │               rateLimiter.ts
+│   │
+│   └───frontend
+│       │   package.json
+│       │
+│       ├───app
+│       │   │   layout.tsx
+│       │   │   page.tsx
+│       │   │
+│       │   ├───ai
+│       │   │       page.tsx
+│       │   │
+│       │   ├───dashboard
+│       │   │       page.tsx
+│       │   │
+│       │   └───practice
+│       ├───components
+│       │       theme-toggle.tsx
+│       │
+│       ├───hooks
+│       ├───lib
+│       ├───store
+│       │       useAuth.ts
+│       │
+│       └───styles
+└───packages
+    ├───config
+    ├───types
+    └───ui
+
+D:\Project\ai-interview-tracker>

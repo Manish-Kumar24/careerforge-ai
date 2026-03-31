@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "types": ["node"],  // ← Critical: tells TS to load @types/node
+    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]  // ← Helps monorepo resolution
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

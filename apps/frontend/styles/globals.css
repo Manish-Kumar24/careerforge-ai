@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* Base UI */
+body {
+  background: white;
+  color: black;
+  font-family: sans-serif;
+}
+
+.dark body {
+  background: black;
+  color: white;
+}
