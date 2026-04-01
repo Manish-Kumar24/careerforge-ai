@@ -22,7 +22,7 @@ export default function Register() {
   const submit = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       await api.post("/auth/signup", form);
       // ✅ Show success + redirect
@@ -30,9 +30,13 @@ export default function Register() {
       router.push("/login");
     } catch (err: any) {
       console.error("Signup error:", err);
-      // ✅ Show user-friendly error
-      setError(err.response?.data?.message || "Signup failed. Please try again.");
-      alert(error);
+
+      // ✅ Handle duplicate email specifically
+      if (err.response?.status === 409) {
+        setError("This email is already registered. Please login instead.");
+      } else {
+        setError(err.response?.data?.message || "Signup failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
