@@ -9,7 +9,6 @@ export const signup = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    // ✅ Validate input
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password required" });
     }
@@ -23,13 +22,20 @@ export const signup = async (req: Request, res: Response) => {
     });
     
   } catch (error: any) {
-    // 🔥 LOG THE ACTUAL ERROR
+    // 🔥 Handle duplicate email specifically
+    if (error.code === 11000 && error.keyPattern?.email) {
+      console.log(`⚠️ Duplicate signup attempt for: ${error.keyValue.email}`);
+      return res.status(409).json({ 
+        message: "Email already registered",
+        error: "This email is already in use. Please login or use a different email."
+      });
+    }
+
+    // Log other errors for debugging
     console.error("❌ SIGNUP ERROR:", {
       message: error.message,
       name: error.name,
       code: error.code,
-      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
-      // Debug env vars
       env: {
         JWT_SECRET_SET: !!process.env.JWT_SECRET,
         JWT_SECRET_LENGTH: process.env.JWT_SECRET?.length,
