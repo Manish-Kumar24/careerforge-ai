@@ -15,7 +15,20 @@ connectDB();
 
 const app = express();
 
-app.use(cors());
+// ✅ UPDATED CORS: Allow Vercel frontend
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://careerforge-ai-frontend-omega.vercel.app",  // ✅ Your Vercel URL
+      /\.vercel\.app$/,  // ✅ All Vercel preview deployments
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
@@ -23,4 +36,14 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/interviews", interviewRoutes);
 app.use("/api/applications", applicationRoutes);
 
-app.listen(5000, () => console.log("Server running on 5000"));
+// ✅ Add health check for deployment testing
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    service: "careerforge-ai-api",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

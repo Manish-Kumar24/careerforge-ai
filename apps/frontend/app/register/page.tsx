@@ -11,6 +11,8 @@ import { Card } from "../../components/ui/card";
 
 export default function Register() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     email: "",
@@ -18,8 +20,22 @@ export default function Register() {
   });
 
   const submit = async () => {
-    await api.post("/auth/signup", form);
-    router.push("/login");
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await api.post("/auth/signup", form);
+      // ✅ Show success + redirect
+      alert("✅ Account created! Please login.");
+      router.push("/login");
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      // ✅ Show user-friendly error
+      setError(err.response?.data?.message || "Signup failed. Please try again.");
+      alert(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,6 +45,12 @@ export default function Register() {
         <h1 className="text-3xl font-bold text-center">
           Create Account
         </h1>
+        {/* ✅ Error Message */}
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 py-2 rounded text-sm">
+            ⚠️ {error}
+          </div>
+        )}
 
         <div className="space-y-4">
           <Input
@@ -48,15 +70,15 @@ export default function Register() {
             }
           />
 
-          <Button onClick={submit}>
-            Register
+          <Button onClick={submit} disabled={loading}>
+            {loading ? "Creating..." : "Register"}
           </Button>
         </div>
 
         <p className="text-sm text-center text-gray-500">
           Already have an account?{" "}
           <span
-            className="text-blue-600 cursor-pointer"
+            className="text-blue-600 cursor-pointer hover:underline"
             onClick={() => router.push("/login")}
           >
             Login
