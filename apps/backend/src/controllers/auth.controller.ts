@@ -9,19 +9,38 @@ export const signup = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    const hashed = await bcrypt.hash(password, 10);
+    // ✅ Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
 
+    const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({ email, password: hashed });
 
     res.status(201).json({
       message: "User created successfully",
-      user: {
-        id: user._id,
-        email: user.email
+      user: { id: user._id, email: user.email }
+    });
+    
+  } catch (error: any) {
+    // 🔥 LOG THE ACTUAL ERROR
+    console.error("❌ SIGNUP ERROR:", {
+      message: error.message,
+      name: error.name,
+      code: error.code,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+      // Debug env vars
+      env: {
+        JWT_SECRET_SET: !!process.env.JWT_SECRET,
+        JWT_SECRET_LENGTH: process.env.JWT_SECRET?.length,
+        MONGO_URI_SET: !!process.env.MONGO_URI,
       }
     });
-  } catch (error) {
-    res.status(500).json({ message: "Signup error" });
+
+    res.status(500).json({ 
+      message: "Signup failed", 
+      error: error.message || "Unknown error" 
+    });
   }
 };
 
@@ -29,24 +48,45 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
+
     const user = await User.findOne({ email });
 
-    // ✅ IMPORTANT CHECK
     if (!user || !user.password) {
-      return res.status(400).send("User not found");
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-    if (!valid) return res.status(400).send("Invalid credentials");
+    // ✅ Validate JWT_SECRET before signing
+    if (!process.env.JWT_SECRET) {
+      console.error("❌ JWT_SECRET is not set in environment!");
+      return res.status(500).json({ message: "Server configuration error" });
+    }
 
     const token = jwt.sign(
       { id: user._id },
-      process.env.JWT_SECRET as string
+      process.env.JWT_SECRET as string,
+      { expiresIn: "7d" }  // ✅ Add expiry for security
     );
 
     res.json({ token });
-  } catch (error) {
-    res.status(500).json({ message: "Login error" });
+    
+  } catch (error: any) {
+    console.error("❌ LOGIN ERROR:", {
+      message: error.message,
+      name: error.name,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
+
+    res.status(500).json({ 
+      message: "Login failed", 
+      error: error.message || "Unknown error" 
+    });
   }
 };
