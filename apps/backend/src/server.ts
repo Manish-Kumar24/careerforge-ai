@@ -25,11 +25,15 @@ app.use(
       
       const allowed = [
         "http://localhost:3000",
-        "http://127.0.0.1:3000",  // ← Add this
+        "http://127.0.0.1:3000",
         "https://careerforge-ai-frontend-omega.vercel.app",
+        "https://careerforge-ai-frontend-git-main-manish-kumar24s-projects.vercel.app",  // ✅ Add your Vercel preview URL
+        /\.vercel\.app$/,  // ✅ Allow any Vercel subdomain (regex)
       ];
       
-      if (allowed.includes(origin) || /\.vercel\.app$/.test(origin)) {
+      if (allowed.some(pattern => 
+        typeof pattern === 'string' ? pattern === origin : pattern.test(origin)
+      )) {
         callback(null, true);
       } else {
         console.warn(`CORS blocked origin: ${origin}`);
@@ -38,7 +42,15 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    // ✅ FIX: Allow all headers that frontend might send
+    allowedHeaders: [
+      "Content-Type", 
+      "Authorization", 
+      "X-Requested-With",
+      "Cache-Control",  // ✅ Added: frontend sends this
+      "Pragma",         // ✅ Added: frontend sends this
+      "Expires",        // ✅ Added: frontend sends this
+    ],
     exposedHeaders: ["Content-Length", "X-RateLimit-Limit"],
   })
 );
