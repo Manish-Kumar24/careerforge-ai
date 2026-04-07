@@ -1,3 +1,5 @@
+// apps\frontend\components\layout\sidebar.tsx
+
 "use client";
 
 import Link from "next/link";
@@ -9,13 +11,13 @@ export default function Sidebar() {
   const { isCollapsed, isMobileOpen, toggleCollapse, closeMobile } = useSidebar();
 
   const isActive = (href: string) => pathname === href;
-
+  
   const navItems = [
-    { href: "/dashboard", icon: "📊", label: "Dashboard" },
-    { href: "/applications", icon: "📋", label: "Applications" },
-    { href: "/applications/dashboard", icon: "📈", label: "Analytics" },
-    { href: "/practice", icon: "📚", label: "Practice" },
-    { href: "/ai", icon: "🤖", label: "AI Chat" },
+    { id: "dashboard", href: "/dashboard", icon: "📊", label: "Dashboard" },
+    { id: "applications", href: "/applications", icon: "📋", label: "Applications" },
+    { id: "analytics", href: "/applications/dashboard", icon: "📈", label: "Analytics" },
+    { id: "practice", href: "/practice", icon: "📚", label: "Practice" },
+    { id: "ai", href: "/ai", icon: "🤖", label: "AI Chat" },
   ];
 
   return (
@@ -61,17 +63,17 @@ export default function Sidebar() {
           <nav className="flex flex-col gap-2">
             {navItems.map((item) => (
               <Link
-                key={item.href}
+                key={item.id}  // ✅ FIX: Use item.id instead of item.href
                 href={item.href}
                 onClick={() => closeMobile()}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
-                ${
-                  isActive(item.href)
+                ${isActive(item.href)
                     ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                     : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                }
+                  }
                 ${isCollapsed ? "justify-center" : ""}`}
-                title={isCollapsed ? item.label : undefined}
+                // ✅ FIX: Remove title attribute to prevent hydration mismatch
+                // title={isCollapsed ? item.label : undefined}
               >
                 <span className="text-xl">{item.icon}</span>
                 {!isCollapsed && (

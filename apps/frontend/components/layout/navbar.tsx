@@ -1,9 +1,18 @@
+// apps/frontend/components/layout/navbar.tsx
+
 "use client";
 
 import { useSidebar } from "./sidebar-context";
+import { useAuth } from "@/store/useAuth";
 
 export default function Navbar() {
   const { toggleMobile } = useSidebar();
+  const { email } = useAuth();
+  
+  // ✅ Get first letter of email (uppercase), fallback to "U"
+  const userInitial = email && email.length > 0 
+    ? email.charAt(0).toUpperCase() 
+    : "U";
 
   return (
     <nav className="border-b bg-white dark:bg-gray-900 px-6 py-4">
@@ -31,18 +40,20 @@ export default function Navbar() {
             </svg>
           </button>
 
-          {/* Page Title (Optional) */}
+          {/* Page Title */}
           <h1 className="text-xl font-bold text-gray-800 dark:text-white">
             Welcome Back
           </h1>
         </div>
 
-        {/* Right Side (User, Notifications, etc.) */}
+        {/* Right Side: User Avatar */}
         <div className="flex items-center gap-4">
-          {/* Add user avatar, notifications, etc. */}
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center 
-                        text-white font-medium">
-            U
+          {/* ✅ User Avatar with Initial */}
+          <div
+            className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold"
+            title={email || "Not logged in"}
+          >
+            {userInitial}  {/* ✅ THIS WAS MISSING! */}
           </div>
         </div>
       </div>

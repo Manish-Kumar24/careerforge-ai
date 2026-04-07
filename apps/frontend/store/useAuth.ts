@@ -1,10 +1,11 @@
-// filepath: store/useAuth.ts
+// apps/frontend/store/useAuth.ts
 
 import { create } from "zustand";
 
 type AuthState = {
   token: string | null;
-  setToken: (token: string) => void;
+  email: string | null;  // ✅ NEW: Store user email
+  setToken: (token: string, email?: string) => void;  // ✅ Updated signature
   logout: () => void;
 };
 
@@ -13,14 +14,22 @@ export const useAuth = create<AuthState>((set) => ({
     typeof window !== "undefined"
       ? localStorage.getItem("token")
       : null,
+  email:
+    typeof window !== "undefined"
+      ? localStorage.getItem("email")  // ✅ NEW: Load email from localStorage
+      : null,
 
-  setToken: (token) => {
+  setToken: (token, email) => {
     localStorage.setItem("token", token);
-    set({ token });
+    if (email) {
+      localStorage.setItem("email", email);  // ✅ NEW: Save email
+    }
+    set({ token, email: email || null });
   },
 
   logout: () => {
     localStorage.removeItem("token");
-    set({ token: null });
+    localStorage.removeItem("email");  // ✅ NEW: Clear email
+    set({ token: null, email: null });
   },
 }));

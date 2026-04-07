@@ -1,3 +1,5 @@
+// apps\frontend\features\applications\components\ApplicationModal.tsx
+
 "use client";
 
 import { useState } from "react";

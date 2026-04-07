@@ -1,3 +1,5 @@
+// apps\frontend\components\layout\sidebar-context.tsx
+
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from "react";

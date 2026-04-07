@@ -10,24 +10,41 @@ import aiRoutes from "./routes/ai.routes";
 import interviewRoutes from "./routes/interview.routes";
 import applicationRoutes from "./routes/application.routes";
 
+import practiceRoutes from "./routes/practice.routes";
+
 dotenv.config();
 connectDB();
 
 const app = express();
 
-// ✅ UPDATED CORS: Allow Vercel frontend
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://careerforge-ai-frontend-omega.vercel.app",  // ✅ Your Vercel URL
-      /\.vercel\.app$/,  // ✅ All Vercel preview deployments
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      
+      const allowed = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",  // ← Add this
+        "https://careerforge-ai-frontend-omega.vercel.app",
+      ];
+      
+      if (allowed.includes(origin) || /\.vercel\.app$/.test(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked origin: ${origin}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    exposedHeaders: ["Content-Length", "X-RateLimit-Limit"],
   })
 );
+
+// Explicitly handle ALL preflight requests
+app.options("*", cors());
 
 app.use(express.json());
 
@@ -35,6 +52,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/interviews", interviewRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api/practice", practiceRoutes);
 
 // ✅ Add health check for deployment testing
 app.get("/api/health", (req, res) => {

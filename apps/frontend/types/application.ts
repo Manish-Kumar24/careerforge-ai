@@ -21,6 +21,6 @@ export interface Application {
   status: ApplicationStatus;
   appliedDate: string;
   notes?: string;
-  isPriority: boolean;
+  isPriority?: boolean;
   timeline: TimelineEntry[];
 }

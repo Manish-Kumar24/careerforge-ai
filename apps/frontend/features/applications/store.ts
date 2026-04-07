@@ -1,3 +1,5 @@
+// apps\frontend\features\applications\store.ts
+
 import { create } from "zustand";
 import {
   getApplications,

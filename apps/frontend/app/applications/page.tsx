@@ -34,11 +34,15 @@ export default function ApplicationsPage() {
       priorityFilter === "all"
         ? true
         : (app as any).isPriority === true  // ✅ Filter by priority (fallback for missing type property)
-  )
+    )
     .sort((a, b) => {
-      if (a.isPriority !== b.isPriority) {
-      return a.isPriority ? -1 : 1;
-    }
+      // ✅ Safe explicit boolean check
+      const aPriority = a.isPriority === true;
+      const bPriority = b.isPriority === true;
+
+      if (aPriority !== bPriority) {
+        return aPriority ? -1 : 1;
+      }
       const aTime = new Date((a as { createdAt?: string | number }).createdAt ?? 0).getTime();
       const bTime = new Date((b as { createdAt?: string | number }).createdAt ?? 0).getTime();
 

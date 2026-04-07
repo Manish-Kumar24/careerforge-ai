@@ -1,3 +1,5 @@
+// apps\frontend\features\applications\components\StatusChart.tsx
+
 "use client";
 
 import { useState } from "react";

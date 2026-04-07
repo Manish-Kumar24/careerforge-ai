@@ -1,3 +1,5 @@
+// apps\frontend\components\ui\input.tsx
+
 export function Input({ className = "", ...props }) {
   return (
     <input

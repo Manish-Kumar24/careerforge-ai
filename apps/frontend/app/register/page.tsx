@@ -25,7 +25,6 @@ export default function Register() {
 
     try {
       await api.post("/auth/signup", form);
-      // ✅ Show success + redirect
       alert("✅ Account created! Please login.");
       router.push("/login");
     } catch (err: any) {

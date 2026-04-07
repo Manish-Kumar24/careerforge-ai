@@ -1,16 +1,97 @@
-# Environment variables
-**/.env
-**/.env.local
-**/.env.production
+# ============================================
+# ROOT LEVEL (Monorepo)
+# ============================================
 
 # Dependencies
+node_modules/
 **/node_modules/
 
-# Build outputs
+# Environment Variables (NEVER commit these)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Build Outputs
 **/dist/
 **/build/
 **/.next/
 
-# IDE
+# IDE & Editor
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary Files
+tmp/
+temp/
+.cache/
+
+# Uploads (if any)
+**/uploads/
+**/public/uploads/
+
+# Database (local only - you're using Atlas)
+*.sqlite
+*.db
+
+# TypeScript
+*.tsbuildinfo
+
+# ============================================
+# SECURITY: Never Commit These
+# ============================================
+
+# Private Keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# SSH
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# Credentials
+credentials/
+secrets/
+config/secrets.json
+
+# ============================================
+# OPTIONAL: If You Want to Ignore These
+# ============================================
+
+# Documentation builds
+docs/_build/
+
+# Local development overrides
+docker-compose.override.yml
+
+# Planning documents (local only)
+plans/
+
+# Documentation builds
+docs/_build/

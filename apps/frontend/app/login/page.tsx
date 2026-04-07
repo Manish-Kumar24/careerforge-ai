@@ -24,7 +24,8 @@ export default function Login() {
 
     try {
       const res = await api.post("/auth/login", form);
-      setToken(res.data.token);
+      // ✅ Pass email along with token
+      setToken(res.data.token, form.email);
       router.push("/dashboard");
     } catch (err: any) {
       console.log("ERROR:", err.response?.data);
