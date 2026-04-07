@@ -2,9 +2,11 @@
 
 import axios from "axios";
 
-// ✅ Use relative path - Next.js rewrites will proxy to backend
+// ✅ Use absolute URL from environment variable (works on Vercel + local)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
 const api = axios.create({
-  baseURL: "/api",  // Relative path
+  baseURL: API_BASE_URL,  // ✅ Absolute URL, not relative
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
