@@ -47,9 +47,9 @@ tmp/
 temp/
 .cache/
 
-# Uploads (if any)
-**/uploads/
-**/public/uploads/
+# Ignore uploads folder BUT allow problems.csv
+apps/backend/uploads/
+!apps/backend/uploads/problems.csv
 
 # Database (local only - you're using Atlas)
 *.sqlite
