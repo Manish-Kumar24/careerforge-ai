@@ -47,7 +47,7 @@ tmp/
 temp/
 .cache/
 
-# Ignore uploads folder BUT allow problems.csv
+# ✅ FIX: Ignore uploads folder BUT allow problems.csv (root-relative paths)
 apps/backend/uploads/
 !apps/backend/uploads/problems.csv
 
@@ -92,6 +92,3 @@ docker-compose.override.yml
 
 # Planning documents (local only)
 plans/
-
-# Documentation builds
-docs/_build/

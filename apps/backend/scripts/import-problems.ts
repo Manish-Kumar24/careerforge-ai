@@ -1,3 +1,5 @@
+// apps/backend/scripts/import-problems.ts
+
 import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
@@ -11,10 +13,10 @@ function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = "";
   let inQuotes = false;
-  
+
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
-    
+
     if (char === '"') {
       inQuotes = !inQuotes;
     } else if (char === "," && !inQuotes) {
@@ -25,11 +27,11 @@ function parseCSVLine(line: string): string[] {
     }
   }
   result.push(current.trim());
-  
+
   return result;
 }
 
-// ✅ Helper: Parse comma-separated fields (for patterns, companies, etc.)
+// ✅ Helper: Parse comma-separated fields
 function parseListField(field: string): string[] {
   if (!field) return [];
   return field
@@ -66,12 +68,11 @@ async function importProblems() {
     console.log("✅ Connected to MongoDB");
 
     const csvPath = path.join(__dirname, "../uploads/problems.csv");
-    
+
     // ✅ Read file and strip BOM if present
     let content = fs.readFileSync(csvPath, "utf-8");
     if (content.charCodeAt(0) === 0xFEFF) {
       content = content.slice(1);
-      console.log("🔍 Stripped BOM from CSV");
     }
 
     // ✅ Split into lines
@@ -82,8 +83,6 @@ async function importProblems() {
 
     // ✅ Parse header row
     const headers = parseCSVLine(lines[0]).map((h) => h.trim());
-    console.log(`📊 Headers: ${headers.join(", ")}`);
-    console.log(`📊 Found ${lines.length - 1} data rows`);
 
     let imported = 0;
     let errors = 0;
@@ -92,21 +91,17 @@ async function importProblems() {
     for (let i = 1; i < lines.length; i++) {
       try {
         const values = parseCSVLine(lines[i]);
-        
-        // ✅ Map values to headers into an object
+
+        // ✅ Map values to headers
         const row: Record<string, string> = {};
         headers.forEach((header, index) => {
           row[header] = values[index] || "";
         });
-
-        // ✅ Debug log
-        console.log(`\n🔍 Row ${i}: "${row.title}" | difficulty: "${row.difficulty}"`);
-
         const title = (row.title || "").trim();
         const link = (row.link || "").trim();
-        
+
+        // ❗ Skip invalid rows
         if (!title || !link) {
-          console.log(`⚠️  Skipped: missing title or link`);
           continue;
         }
 
@@ -126,8 +121,6 @@ async function importProblems() {
           targetTimeMinutes: Math.round(targetSeconds / 60),
         };
 
-        console.log(`   → Saving: ${title} | ${difficulty} | ${platform}`);
-
         await PracticeProblem.findOneAndUpdate(
           { link },
           { $set: problemData },
@@ -135,9 +128,6 @@ async function importProblems() {
         );
 
         imported++;
-        if (imported <= 3) {
-          console.log(`✅ Imported: ${title}`);
-        }
       } catch (err: any) {
         errors++;
         console.error(`❌ Row ${i} error:`, err.message);
@@ -148,9 +138,9 @@ async function importProblems() {
     console.log(`✅ Imported: ${imported}`);
     console.log(`❌ Errors: ${errors}`);
 
-    // ✅ Verify data in DB
+    // ✅ Verify DB count
     const count = await PracticeProblem.countDocuments();
-    console.log(`🗄️  Total problems in DB: ${count}`);
+    console.log(`🗄️ Total problems in DB: ${count}`);
 
     await mongoose.disconnect();
     console.log("\n✅ Import completed successfully!");
