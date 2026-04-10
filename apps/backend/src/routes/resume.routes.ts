@@ -14,8 +14,9 @@ const router = Router();
 // All routes protected by auth
 router.use(authMiddleware);
 
-router.post("/upload", upload.single("resume"), uploadResume);
-router.get("/history", getAnalysisHistory);
-router.get("/:id", getAnalysisById);
+// ✅ Explicitly type handlers to avoid overload errors
+router.post("/upload", upload.single("resume"), uploadResume as any);
+router.get("/history", getAnalysisHistory as any);
+router.get("/:id", getAnalysisById as any);
 
 export default router;

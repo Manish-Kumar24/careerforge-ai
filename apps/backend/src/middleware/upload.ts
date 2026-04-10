@@ -1,26 +1,28 @@
 // filepath: apps/backend/src/middleware/upload.ts
-import multer, { StorageEngine, FileFilterCallback } from "multer";
+
+import multer, { StorageEngine } from "multer";
 import { Request } from "express";
 import path from "path";
 
 // Configure storage: temp disk storage for immediate processing
 const storage: StorageEngine = multer.diskStorage({
-  destination: (req: Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
-    cb(null, "uploads/resumes/");
-  },
-  filename: (req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
+  destination: (req, file, cb) => cb(null, "uploads/resumes/"),
+  filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     cb(null, `${file.fieldname}-${uniqueSuffix}${path.extname(file.originalname)}`);
   },
 });
 
 // File filter: only PDF/DOCX
-const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+const fileFilter = (
+  req: Request, 
+  file: Express.Multer.File, 
+  cb: multer.FileFilterCallback
+) => {
   const allowed = [
-    "application/pdf",
+    "application/pdf", 
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   ];
-  
   if (allowed.includes(file.mimetype)) {
     cb(null, true);
   } else {
