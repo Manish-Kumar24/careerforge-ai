@@ -92,3 +92,6 @@ docker-compose.override.yml
 
 # Planning documents (local only)
 plans/
+
+apps/backend/uploads/resumes/*
+!apps/backend/uploads/resumes/.gitkeep

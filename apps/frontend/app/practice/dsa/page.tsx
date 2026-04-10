@@ -10,6 +10,7 @@ import PatternGroup from "@/components/features/practice/PatternGroup";
 import ProgressBar from "@/components/features/practice/ProgressBar";
 import ProblemCard from "@/components/features/practice/ProblemCard";
 import ExportButton from "@/components/features/practice/ExportButton"; // ✅ NEW IMPORT
+import { getPatternSortIndex, getPatternDisplayName } from "@/config/patterns";
 
 export default function DSAPage() {
   const { isCollapsed } = useSidebar();
@@ -55,14 +56,32 @@ export default function DSAPage() {
     return cleanup;
   }, [filterValues, debouncedFetch]); // ✅ Removed hasActiveFilters check
 
-  // ✅ FIX: Memoize grouped problems to prevent recalculation
+  // ✅ FIX: Memoize grouped AND sorted problems
   const groupedProblems = useMemo(() => {
-    return problems.reduce((acc, problem) => {
+    // Step 1: Group problems by primary pattern
+    const groups = problems.reduce((acc, problem) => {
       const primaryPattern = problem.patterns[0] || "Uncategorized";
       if (!acc[primaryPattern]) {
         acc[primaryPattern] = [];
       }
       acc[primaryPattern].push(problem);
+      return acc;
+    }, {} as Record<string, typeof problems>);
+
+    // Step 2: Sort patterns by custom order
+    const sortedPatterns = Object.keys(groups).sort((a, b) => {
+      const indexA = getPatternSortIndex(a);
+      const indexB = getPatternSortIndex(b);
+
+      if (indexA !== indexB) {
+        return indexA - indexB;  // Custom order
+      }
+      return a.localeCompare(b);  // Fallback: alphabetical
+    });
+
+    // Step 3: Build sorted object
+    return sortedPatterns.reduce((acc, pattern) => {
+      acc[pattern] = groups[pattern];
       return acc;
     }, {} as Record<string, typeof problems>);
   }, [problems]);
@@ -83,21 +102,19 @@ export default function DSAPage() {
             <div className="flex gap-2 items-center">
               <button
                 onClick={() => setViewMode("table")}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  viewMode === "table"
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === "table"
                     ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600"
                     : "bg-gray-100 dark:bg-gray-800 text-gray-600"
-                }`}
+                  }`}
               >
                 📊 Table
               </button>
               <button
                 onClick={() => setViewMode("card")}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  viewMode === "card"
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === "card"
                     ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600"
                     : "bg-gray-100 dark:bg-gray-800 text-gray-600"
-                }`}
+                  }`}
               >
                 📱 Cards
               </button>

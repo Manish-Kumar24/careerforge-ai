@@ -3,16 +3,16 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+dotenv.config();
 import { connectDB } from "./config/db";
 
 import authRoutes from "./routes/auth.routes";
 import aiRoutes from "./routes/ai.routes";
 import interviewRoutes from "./routes/interview.routes";
 import applicationRoutes from "./routes/application.routes";
-
+import resumeRoutes from "./routes/resume.routes";
 import practiceRoutes from "./routes/practice.routes";
-
-dotenv.config();
+import jdRoutes from "./routes/jd.routes"; // ✅ ADD THIS
 connectDB();
 
 const app = express();
@@ -65,6 +65,8 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/interviews", interviewRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/practice", practiceRoutes);
+app.use("/api/resume", resumeRoutes); // ✅ ADD THIS LINE
+app.use("/api/jd", jdRoutes); // ✅ ADD THIS LINE
 
 // ✅ Add health check for deployment testing
 app.get("/api/health", (req, res) => {
