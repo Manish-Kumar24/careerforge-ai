@@ -1,16 +1,17 @@
 // apps/backend/src/controllers/resume.controller.ts
 
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import ResumeAnalysis from "../models/ResumeAnalysis";
 import { extractTextFromFile } from "../services/resume/fileParser";
 import { analyzeResumeWithAI } from "../services/resume/aiAnalyzer";
 import fs from "fs/promises";
 import path from "path";
 
-// ✅ Type-safe request with multer file + auth user
+// ✅ Simple type for requests with multer file + auth user
 type AuthRequest = Request & {
   user?: { _id?: string; id?: string; userId?: string };
   file?: Express.Multer.File;
+  params?: { id?: string };
 };
 
 export const uploadResume = async (req: AuthRequest, res: Response) => {
@@ -99,7 +100,7 @@ export const getAnalysisById = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
     }
 
-    const { id } = req.params;
+    const { id } = req.params || {};
 
     const analysis = await ResumeAnalysis.findOne({ _id: id, userId })
       .select("-extractedText");

@@ -1,4 +1,6 @@
 // filepath: apps/backend/src/services/resume/fileParser.ts
+
+// @ts-ignore - pdf-parse has no official TypeScript types
 import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
 import fs from "fs/promises";
