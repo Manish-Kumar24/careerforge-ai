@@ -1,9 +1,8 @@
-// apps/frontend/components/features/resume/MatchResult.tsx
-
 "use client";
 
 import { JDMatch } from "@/types/jd";
-import { CheckCircle, XCircle, AlertTriangle, Lightbulb, Target } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Lightbulb, Target, Download, Database } from "lucide-react";
+import { generateJDMatchPDF } from "@/lib/generateReportPDF";
 
 interface Props {
   match: JDMatch;
@@ -22,24 +21,38 @@ export default function MatchResult({ match }: Props) {
     return <XCircle className="h-5 w-5 text-red-500" />;
   };
 
+  const handleDownload = () => generateJDMatchPDF(match);
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Save Badge + Download Button */}
       <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
-              {match.jdTitle || "Job Description Match"}
-            </h3>
-            <p className="text-sm text-gray-500">
-              Matched against: {match.resumeId.originalFilename}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
             {getScoreIcon(match.matchScore)}
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                {match.jdTitle || "Job Description Match"}
+              </h3>
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                <Database className="h-3 w-3 text-green-500" />
+                <span className="text-green-600 font-medium">Saved to your account</span>
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
             <span className={`text-2xl font-bold ${getScoreColor(match.matchScore)}`}>
               {match.matchScore}%
             </span>
+            <button
+              onClick={handleDownload}
+              className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+              aria-label="Download match report as PDF"
+            >
+              <Download className="h-4 w-4" />
+              Download PDF
+            </button>
           </div>
         </div>
       </div>

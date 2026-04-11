@@ -1,13 +1,14 @@
 "use client";
 
 import { ResumeAnalysis } from "@/types/resume";
-import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Download, Database } from "lucide-react";
+import { generateResumeAnalysisPDF } from "@/lib/generateReportPDF";
 
 interface Props {
   analysis: ResumeAnalysis;
 }
 
-// ✅ FIX 1: Move ScoreGauge OUTSIDE AnalysisResult (prevents re-creation on render)
+// ✅ ScoreGauge component (kept from your original - performance optimized)
 function ScoreGauge({ score }: { score: number }) {
   const radius = 45;
   const circumference = 2 * Math.PI * radius;
@@ -62,23 +63,35 @@ export default function AnalysisResult({ analysis }: Props) {
     return "text-red-600";
   };
 
-  // ✅ FIX 2: Removed unused getScoreIcon function
+  const handleDownload = () => generateResumeAnalysisPDF(analysis);
 
   return (
     <div className="space-y-6">
-      {/* Overall Score */}
-      {/* ✅ FIX 3: Removed duplicate comment + added responsive layout */}
+      {/* Overall Score Header with Save Badge + Download Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 dark:text-white">Overall ATS Score</h3>
-          <p className="text-sm text-gray-500">Based on AI analysis</p>
+          <p className="text-sm text-gray-500 flex items-center gap-1">
+            <Database className="h-3 w-3 text-green-500" />
+            <span className="text-green-600 font-medium">Saved to your account</span>
+          </p>
         </div>
         
         <ScoreGauge score={analysis.aiScore} />
         
-        <span className={`text-sm font-medium text-center sm:text-right ${getScoreColor(analysis.aiScore)}`}>
-          {analysis.aiScore >= 80 ? 'Excellent' : analysis.aiScore >= 60 ? 'Good' : 'Needs Improvement'}
-        </span>
+        <div className="flex flex-col sm:items-end gap-2">
+          <span className={`text-sm font-medium ${getScoreColor(analysis.aiScore)}`}>
+            {analysis.aiScore >= 80 ? 'Excellent' : analysis.aiScore >= 60 ? 'Good' : 'Needs Improvement'}
+          </span>
+          <button
+            onClick={handleDownload}
+            className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors w-full sm:w-auto justify-center"
+            aria-label="Download analysis report as PDF"
+          >
+            <Download className="h-4 w-4" />
+            Download PDF
+          </button>
+        </div>
       </div>
 
       {/* Summary */}
