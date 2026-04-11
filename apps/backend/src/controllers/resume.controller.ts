@@ -46,12 +46,29 @@ export const uploadResume = async (req: any, res: Response) => {
     res.status(201).json(safeResult);
 
   } catch (error: any) {
-    console.error("Resume upload error:", error);
-    if (req.file?.path) {
-      await fs.unlink(req.file.path).catch(() => {});
-    }
-    res.status(500).json({ error: error.message || "Failed to process resume" });
+  // ✅ CRITICAL: Log full error details to Render logs
+  console.error("❌ RESUME UPLOAD CRASH:", {
+    message: error.message,
+    code: error.code,
+    stack: error.stack?.split('\n').slice(0, 3).join('\n'),
+    fileName: req.file?.originalname,
+    mimetype: req.file?.mimetype,
+    fileSize: req.file?.size,
+    userId: req.user?._id || req.user?.id,
+    groqKeySet: !!process.env.GROQ_API_KEY,
+    mongoConnected: mongoose.connection.readyState === 1,
+  });
+
+  // Clean up file on error
+  if (req.file?.path) {
+    await fs.unlink(req.file.path).catch(() => {});
   }
+
+  // Return user-friendly error (never expose stack to client)
+  res.status(500).json({ 
+    error: "Failed to process resume. Please try a smaller PDF or contact support." 
+  });
+}
 };
 
 export const getAnalysisHistory = async (req: any, res: Response) => {

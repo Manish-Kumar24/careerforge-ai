@@ -47,6 +47,8 @@ temp/
 # ✅ FIX: Ignore uploads folder BUT allow problems.csv (relative paths)
 uploads/
 !uploads/problems.csv
+uploads/resumes/*
+!uploads/resumes/.gitkeep
 
 # Database (local only - you're using Atlas)
 *.sqlite
