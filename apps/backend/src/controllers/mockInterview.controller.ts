@@ -1,8 +1,7 @@
 // filepath: apps/backend/src/controllers/mockInterview.controller.ts
 
 import { Request, Response, NextFunction } from "express";
-import { Types } from "mongoose"; 
-import PDFDocument from "pdfkit";
+import { Types } from "mongoose";
 import { ParsedQs } from "qs";
 import InterviewSession, { IInterviewSession, InterviewType, Difficulty, SessionStatus } from "../models/InterviewSession";
 import InterviewLoop, { IInterviewLoop, LoopStatus } from "../models/InterviewLoop";
@@ -664,114 +663,5 @@ export const getLoopById = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("getLoopById error:", error);
     res.status(500).json({ error: error.message || "Failed to fetch loop" });
-  }
-};
-
-export const generateSessionPDF = async (req: Request, res: Response) => {
-  try {
-    const sessionId = req.params.id;
-    const userId = req.user?.id || req.user?._id;
-    
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    // Fetch session with ownership check
-    const session = await InterviewSession.findOne({ _id: sessionId, userId });
-    if (!session || !session.report) {
-      return res.status(404).json({ error: "Report not found" });
-    }
-
-    // Create PDF document
-    const doc = new PDFDocument({ margin: 50, size: "A4" });
-    
-    // Set response headers for download
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename=interview-report-${sessionId.slice(-8)}.pdf`);
-    
-    // Pipe PDF to response
-    doc.pipe(res);
-
-    // === HEADER ===
-    // ✅ FIX: Use built-in font names, not "bold"/"normal"
-    doc.fontSize(20).font("Helvetica-Bold").text("Mock Interview Report", { align: "center" });
-    doc.moveDown(0.5);
-    doc.fontSize(12).font("Helvetica").text(`Session ID: ${sessionId}`, { align: "center" });
-    doc.moveDown(1);
-
-    // === OVERALL SCORE + HINTS ===
-    doc.fontSize(28).font("Helvetica-Bold").fillColor("#2563EB").text(`${session.report.overallScore}/100`, { align: "center" });
-    doc.moveDown(0.5);
-    
-    // ✅ POLISH: Show hints used
-    if (session.report.meta?.hintsUsed && session.report.meta.hintsUsed > 0) {
-      doc.fontSize(10).font("Helvetica").fillColor("#6B7280").text(`Hints used: ${session.report.meta.hintsUsed}`, { align: "center" });
-      doc.moveDown(0.5);
-    }
-
-    // === CATEGORY SCORES ===
-    doc.fontSize(14).font("Helvetica-Bold").fillColor("#000").text("Category Breakdown");
-    doc.moveDown(0.3);
-    Object.entries(session.report.categoryScores).forEach(([key, value]: [string, any]) => {
-      doc.fontSize(11).font("Helvetica").text(`${key.replace(/([A-Z])/g, " $1").trim()}: ${value}/100`);
-    });
-    doc.moveDown(1);
-
-    // === STRENGTHS ===
-    doc.fontSize(14).font("Helvetica-Bold").text("Strengths");
-    doc.moveDown(0.3);
-    session.report.strengths.forEach((s: string) => {
-      doc.fontSize(11).font("Helvetica").text(`• ${s}`);
-    });
-    doc.moveDown(1);
-
-    // === IMPROVEMENTS ===
-    doc.fontSize(14).font("Helvetica-Bold").text("Areas for Improvement");
-    doc.moveDown(0.3);
-    session.report.improvements.forEach((s: string) => {
-      doc.fontSize(11).font("Helvetica").text(`• ${s}`);
-    });
-    doc.moveDown(1);
-
-    // === NEXT STEPS ===
-    if (session.report.nextSteps?.length) {
-      doc.fontSize(14).font("Helvetica-Bold").text("Recommended Next Steps");
-      doc.moveDown(0.3);
-      session.report.nextSteps.forEach((step: string, i: number) => {
-        doc.fontSize(11).font("Helvetica").text(`${i + 1}. ${step}`);
-      });
-      doc.moveDown(1);
-    }
-
-    // === PER-QUESTION FEEDBACK ===
-    doc.fontSize(14).font("Helvetica-Bold").text("Per-Question Feedback");
-    doc.moveDown(0.5);
-    
-    session.report.perQuestionFeedback.forEach((q: any) => {
-      // ✅ POLISH: Show no-answer indicator
-      const questionText = `Q${q.questionIndex}: ${q.question}${q.didNotAnswer ? " (No answer)" : ""}`;
-      doc.fontSize(11).font("Helvetica-Bold").text(questionText);
-      
-      doc.fontSize(10).font("Helvetica").text(q.feedback);
-      
-      // ✅ POLISH: Show original answer snippet if available
-      if (q.answerOriginal) {
-        doc.fontSize(9).font("Helvetica-Oblique").fillColor("#666").text(`Your answer: ${q.answerOriginal.slice(0, 250)}${q.answerOriginal.length > 250 ? "..." : ""}`);
-      }
-      
-      doc.fontSize(10).font("Helvetica").fillColor("#000").text(`Score: ${q.score}/100`);
-      doc.moveDown(0.5);
-    });
-
-    // Finalize PDF - this ends the stream
-    doc.end();
-
-  } catch (error: any) {
-    console.error("PDF generation error:", error);
-    
-    // ✅ FIX: Only send JSON error if headers not yet sent AND response not ended
-    if (!res.headersSent && !res.writableEnded) {
-      res.status(500).json({ error: "Failed to generate PDF" });
-    }
   }
 };
