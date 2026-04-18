@@ -2,8 +2,6 @@
 
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
-// ✅ FIX: Remove Font.register - Helvetica is built-in to @react-pdf
-
 const styles = StyleSheet.create({
   page: { padding: 40, fontFamily: "Helvetica", fontSize: 11 },
   title: { fontSize: 20, fontWeight: "bold" as const, marginBottom: 10 },
