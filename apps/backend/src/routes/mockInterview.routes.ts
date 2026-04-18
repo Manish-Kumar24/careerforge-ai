@@ -15,7 +15,6 @@ import {
   getDashboardStats,
   getLoopById, 
   getSessionById,
-  generateSessionPDF
 } from "../controllers/mockInterview.controller"; 
 
 const router = Router();
@@ -65,6 +64,5 @@ router.get("/dashboard/stats", getDashboardStats);
 // ✅ NEW: Fetch single loop by ID (for loop dashboard)
 router.get("/loop/:id", authMiddleware, getLoopById);
 router.get("/session/:id", authMiddleware, getSessionById);
-router.get("/session/:id/report/pdf", generateSessionPDF);
 
 export default router;
