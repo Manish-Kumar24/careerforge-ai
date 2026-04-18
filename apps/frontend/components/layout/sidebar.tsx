@@ -18,7 +18,8 @@ export default function Sidebar() {
     { id: "analytics", href: "/applications/dashboard", icon: "📈", label: "Analytics" },
     { id: "practice", href: "/practice", icon: "📚", label: "Practice" },
     { id: "ai", href: "/ai", icon: "🤖", label: "AI Chat" },
-     { id: "resume", href: "/resume-analyzer", icon: "📄", label: "Resume Analyzer" }, // ✅ ADD THIS
+    { id: "resume", href: "/resume-analyzer", icon: "📄", label: "Resume Analyzer" }, // ✅ ADD THIS
+    { id: "interview", href: "/interview", icon: "🎤", label: "Mock Interviews" }, // ✅ ADD THIS
   ];
 
   return (

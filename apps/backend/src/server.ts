@@ -13,6 +13,7 @@ import applicationRoutes from "./routes/application.routes";
 import resumeRoutes from "./routes/resume.routes";
 import practiceRoutes from "./routes/practice.routes";
 import jdRoutes from "./routes/jd.routes"; // ✅ ADD THIS
+import mockInterviewRoutes from "./routes/mockInterview.routes";
 connectDB();
 
 const app = express();
@@ -67,6 +68,7 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api/practice", practiceRoutes);
 app.use("/api/resume", resumeRoutes); // ✅ ADD THIS LINE
 app.use("/api/jd", jdRoutes); // ✅ ADD THIS LINE
+app.use("/api/mock-interview", mockInterviewRoutes); // ✅ ADD THIS LINE
 
 // ✅ Add health check for deployment testing
 app.get("/api/health", (req, res) => {

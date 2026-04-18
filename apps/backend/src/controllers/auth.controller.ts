@@ -96,3 +96,33 @@ export const login = async (req: Request, res: Response) => {
     });
   }
 };
+
+// ✅ VERIFY TOKEN AND RETURN USER
+export const getMe = async (req: Request, res: Response) => {
+  try {
+    // authMiddleware already attached user to req.user
+    const user = req.user;
+    
+    if (!user || !user.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    // Fetch full user from DB (optional, but good practice)
+    const userData = await User.findById(user.id).select("-password");
+    
+    if (!userData) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    res.json({ 
+      user: { 
+        id: userData._id, 
+        email: userData.email 
+        // Add other non-sensitive fields as needed
+      } 
+    });
+  } catch (error: any) {
+    console.error("❌ GET_ME ERROR:", error);
+    res.status(500).json({ error: "Failed to fetch user" });
+  }
+};
