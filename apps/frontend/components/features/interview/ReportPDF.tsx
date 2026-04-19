@@ -21,7 +21,6 @@ const styles = StyleSheet.create({
   scoreText: { color: "#6B7280" as const }
 });
 
-// ✅ FIX: Define report prop type locally (avoids circular dependency with types/interview.ts)
 type ReportData = {
   overallScore: number;
   categoryScores: Record<string, number>;
@@ -32,23 +31,34 @@ type ReportData = {
     question: string;
     feedback: string;
     score: number;
-    answerOriginal?: string;  // ✅ NEW
+    answerOriginal?: string;
     didNotAnswer?: boolean;
   }>;
   meta?: { hintsUsed: number };
 };
 
-// ✅ FIX: Explicit return type for @react-pdf compatibility
-const ReportPDF = ({ report }: { report: ReportData }): React.ReactElement => {
-  // ✅ FIX: Safe typed iteration
+// ✅ FIX: Added sessionId to the props interface
+interface ReportPDFProps {
+  report: ReportData;
+  sessionId: string;
+}
+
+// ✅ FIX: Destructure sessionId here
+const ReportPDF = ({ report, sessionId }: ReportPDFProps): React.ReactElement => {
   const categoryEntries = Object.entries(report.categoryScores) as [string, number][];
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>Mock Interview Report</Text>
+        
+        {/* ✅ Display Session ID in PDF */}
+        <Text style={{ fontSize: 10, color: "#6B7280", marginBottom: 10 }}>
+          Session ID: {sessionId}
+        </Text>
+        
         <Text style={styles.score}>{report.overallScore}/100</Text>
-        {/* ✅ POLISH: Show hints used in PDF */}
+
         {report.meta?.hintsUsed !== undefined && report.meta.hintsUsed > 0 && (
           <Text style={{ fontSize: 10, color: "#6B7280", marginBottom: 10 }}>
             Hints used: {report.meta.hintsUsed}
@@ -85,12 +95,10 @@ const ReportPDF = ({ report }: { report: ReportData }): React.ReactElement => {
             <View key={i} style={styles.questionBlock}>
               <Text style={styles.questionTitle}>
                 Q{q.questionIndex}: {q.question}
-                {/* ✅ POLISH: Show no-answer indicator */}
                 {q.didNotAnswer ? " (No answer)" : ""}
               </Text>
               <Text style={styles.text}>{q.feedback}</Text>
               <Text style={{ ...styles.text, ...styles.scoreText }}>Score: {q.score}/100</Text>
-              {/* ✅ POLISH: Show original answer if available */}
               {q.answerOriginal && (
                 <Text style={{ fontSize: 9, color: "#9CA3AF", marginTop: 2, fontStyle: "italic" }}>
                   Your answer: {q.answerOriginal.slice(0, 200)}{q.answerOriginal.length > 200 ? "..." : ""}
