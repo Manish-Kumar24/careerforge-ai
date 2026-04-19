@@ -4,19 +4,10 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import { interviewApi } from "@/features/interview/api";
 import type { InterviewSession } from "@/types/interview";
-
-const PDFDownloadLink = dynamic(
-  () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
-  { ssr: false, loading: () => <span className="text-sm text-gray-500">Preparing PDF...</span> }
-);
-
-const ReportPDF = dynamic(
-  () => import("@/components/features/interview/ReportPDF").then((mod) => mod.default),
-  { ssr: false }
-);
 
 type ReportState = NonNullable<InterviewSession["report"]> | null;
 
@@ -60,7 +51,7 @@ export default function InterviewReport() {
         setReport(null);
       })
       .finally(() => setLoading(false));
-  }, [sessionId]); // ✅ sessionId is now typed as string
+  }, [sessionId]);
 
   if (loading) {
     return (
@@ -91,8 +82,9 @@ export default function InterviewReport() {
 
   const categoryEntries = Object.entries(report.categoryScores || {}) as [string, number][];
 
+  // ✅ FIX: Add id="report-content" to outermost div for html2canvas capture
   return (
-    <div className="max-w-5xl mx-auto p-6">
+    <div id="report-content" className="max-w-5xl mx-auto p-6 bg-white dark:bg-gray-900">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Interview Report</h1>
         <button
@@ -191,24 +183,77 @@ export default function InterviewReport() {
             ))}
           </div>
 
-          {/* PDF Download */}
+          {/* ✅ FIX: Client-side PDF using jspdf + html2canvas */}
           <div className="mt-4 pt-4 border-t flex justify-end">
-            {typeof window !== "undefined" && report && sessionId && (
-              <PDFDownloadLink
-                document={<ReportPDF report={report as any} sessionId={sessionId} />}
-                fileName={`interview-report-${sessionId.slice(-8)}.pdf`}
-              >
-                {({ loading: pdfLoading, error: pdfError }: any) => {
-                  if (pdfLoading) {
-                    return <span className="px-4 py-2 bg-gray-300 text-gray-500 rounded">Generating PDF...</span>;
+            <button
+              onClick={async () => {
+                const element = document.getElementById("report-content");
+                if (!element) {
+                  alert("Could not find report content to export");
+                  return;
+                }
+                
+                const btn = document.getElementById("pdf-btn") as HTMLButtonElement | null;
+                if (btn) {
+                  btn.disabled = true;
+                  btn.textContent = "Generating PDF...";
+                }
+                
+                try {
+                  // Capture with high quality
+                  const canvas = await html2canvas(element, {
+                    scale: 3, // Higher scale = sharper PDF
+                    useCORS: true,
+                    backgroundColor: "#ffffff",
+                    logging: false,
+                    windowWidth: element.scrollWidth,
+                    windowHeight: element.scrollHeight,
+                  });
+                  
+                  const imgData = canvas.toDataURL("image/png");
+                  const pdf = new jsPDF({
+                    orientation: "portrait",
+                    unit: "mm",
+                    format: "a4",
+                  });
+                  
+                  const imgWidth = 210; // A4 width in mm
+                  const pageHeight = 297; // A4 height in mm
+                  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                  
+let heightLeft = imgHeight;
+let position = 0;
+
+// First page
+pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+heightLeft -= pageHeight;
+
+// Additional pages
+while (heightLeft > 0) {
+  position = heightLeft - imgHeight;
+  pdf.addPage();
+  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+  heightLeft -= pageHeight;
+}
+
+// Save PDF
+pdf.save(`interview-report-${sessionId.slice(-8)}.pdf`);
+                  
+                } catch (err: any) {
+                  console.error("PDF generation failed:", err);
+                  alert("Failed to generate PDF. Please try again.");
+                } finally {
+                  if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = "📄 Download Report (PDF)";
                   }
-                  if (pdfError) {
-                    return <span className="px-4 py-2 bg-red-100 text-red-700 rounded">PDF Error: {pdfError.message}</span>;
-                  }
-                  return <span className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded cursor-pointer">📄 Download Report (PDF)</span>;
-                }}
-              </PDFDownloadLink>
-            )}
+                }
+              }}
+              id="pdf-btn"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              📄 Download Report (PDF)
+            </button>
           </div>
         </div>
       </div>
