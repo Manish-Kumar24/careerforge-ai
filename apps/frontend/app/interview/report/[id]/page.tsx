@@ -4,10 +4,21 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import { interviewApi } from "@/features/interview/api";
 import type { InterviewSession } from "@/types/interview";
+import dynamic from "next/dynamic"; 
+
+// ✅ Dynamic import for @react-pdf (SSR incompatible)
+const PDFDownloadLink = dynamic(
+  () => import("@react-pdf/renderer").then(mod => mod.PDFDownloadLink),
+  { ssr: false, loading: () => <span className="text-sm text-gray-500">Preparing PDF...</span> }
+);
+
+// ✅ Dynamic import for the PDF document component
+const ReportPDF = dynamic(
+  () => import("@/components/features/interview/ReportPDF").then(mod => mod.default),
+  { ssr: false }
+);
 
 type ReportState = NonNullable<InterviewSession["report"]> | null;
 
@@ -84,7 +95,7 @@ export default function InterviewReport() {
 
   // ✅ FIX: Add id="report-content" to outermost div for html2canvas capture
   return (
-    <div id="report-content" className="max-w-5xl mx-auto p-6 bg-white dark:bg-gray-900">
+    <div className="max-w-5xl mx-auto p-6 bg-white dark:bg-gray-900">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Interview Report</h1>
         <button
@@ -183,133 +194,36 @@ export default function InterviewReport() {
             ))}
           </div>
 
-          {/* ✅ FIX: Client-side PDF using jspdf + html2canvas */}
+                    {/* ✅ FIX: Client-side PDF using @react-pdf/renderer */}
           <div className="mt-4 pt-4 border-t flex justify-end">
-            <button
-              onClick={async () => {
-                const element = document.getElementById("report-content");
-                if (!element) {
-                  alert("Could not find report content to export");
-                  return;
-                }
-                
-                try {
-  // Disable button (typed safely)
-  const btn = document.getElementById("pdf-btn") as HTMLButtonElement | null;
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Generating PDF...";
-  }
-
-  const element = document.getElementById("report-content");
-  if (!element) throw new Error("Report content not found");
-
-  // ✅ Clone element (prevents UI break + fixes CSS issues)
-  const clone = element.cloneNode(true) as HTMLElement;
-
-  // ✅ Sanitize problematic styles
-  clone.querySelectorAll("*").forEach((el: Element) => {
-    const style = (el as HTMLElement).style;
-
-    if (
-      style.color?.includes("lab(") ||
-      style.color?.includes("lch(") ||
-      style.color?.includes("oklab(")
-    ) {
-      style.color = "#374151";
-    }
-
-    if (
-      style.backgroundColor?.includes("lab(") ||
-      style.backgroundColor?.includes("lch(") ||
-      style.backgroundColor?.includes("oklab(")
-    ) {
-      style.backgroundColor = "#ffffff";
-    }
-
-    if (
-      style.color?.startsWith("var(") ||
-      style.backgroundColor?.startsWith("var(")
-    ) {
-      style.color = "";
-      style.backgroundColor = "";
-    }
-  });
-
-  // Hide clone off-screen
-  clone.style.position = "absolute";
-  clone.style.left = "-9999px";
-  clone.style.top = "0";
-  clone.style.width = `${element.offsetWidth}px`;
-
-  document.body.appendChild(clone);
-
-  // ✅ Capture canvas
-  const canvas = await html2canvas(clone, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: "#ffffff",
-    logging: false,
-    ignoreElements: (el: Element) => {
-      const tag = el.tagName.toLowerCase();
-      return tag === "script" || tag === "style" || tag === "link";
-    },
-    onclone: (doc: Document) => {
-      if (doc.body) {
-        doc.body.style.backgroundColor = "#ffffff";
-        doc.body.style.color = "#1f2937";
-      }
-    },
-  });
-
-  document.body.removeChild(clone);
-
-  const imgData = canvas.toDataURL("image/png");
-
-  const pdf = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a4",
-  });
-
-  const imgWidth = 210;
-  const pageHeight = 297;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-  let heightLeft = imgHeight;
-  let position = 0;
-
-  // ✅ First page
-  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-  heightLeft -= pageHeight;
-
-  // ✅ Multi-page support
-  while (heightLeft > 0) {
-    position = heightLeft - imgHeight;
-    pdf.addPage();
-    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-  }
-
-  // Save PDF
-  pdf.save(`interview-report-${sessionId.slice(-8)}.pdf`);
-
-} catch (err: any) {
-  console.error("PDF generation failed:", err);
-  alert("Failed to generate PDF. Please try again.\n\nError: " + err.message);
-} finally {
-  const btn = document.getElementById("pdf-btn") as HTMLButtonElement | null;
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = "📄 Download Report (PDF)";
-  }
-}
-              }}
-              id="pdf-btn"
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              📄 Download Report (PDF)
-            </button>
+            {typeof window !== "undefined" && report && sessionId && (
+              <PDFDownloadLink
+                document={<ReportPDF report={report} sessionId={sessionId} />}
+                fileName={`interview-report-${sessionId.slice(-8)}.pdf`}
+              >
+                {({ loading: pdfLoading, error: pdfError }: any) => {
+                  if (pdfLoading) {
+                    return (
+                      <span className="px-4 py-2 bg-gray-300 text-gray-500 rounded cursor-not-allowed">
+                        Generating PDF...
+                      </span>
+                    );
+                  }
+                  if (pdfError) {
+                    return (
+                      <span className="px-4 py-2 bg-red-100 text-red-700 rounded">
+                        PDF Error: {pdfError.message}
+                      </span>
+                    );
+                  }
+                  return (
+                    <span className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded cursor-pointer transition-colors">
+                      📄 Download Report (PDF)
+                    </span>
+                  );
+                }}
+              </PDFDownloadLink>
+            )}
           </div>
         </div>
       </div>
