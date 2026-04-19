@@ -194,14 +194,17 @@ export default function InterviewReport() {
             ))}
           </div>
 
-                    {/* ✅ FIX: Client-side PDF using @react-pdf/renderer */}
+                                                  {/* ✅ FIX: Client-side PDF using @react-pdf/renderer */}
           <div className="mt-4 pt-4 border-t flex justify-end">
             {typeof window !== "undefined" && report && sessionId && (
               <PDFDownloadLink
                 document={<ReportPDF report={report} sessionId={sessionId} />}
                 fileName={`interview-report-${sessionId.slice(-8)}.pdf`}
               >
-                {({ loading: pdfLoading, error: pdfError }: any) => {
+                {/* @ts-ignore: PDFDownloadLink children type not exported by @react-pdf */}
+                {(props: any) => {
+                  const { loading: pdfLoading, error: pdfError } = props;
+                  
                   if (pdfLoading) {
                     return (
                       <span className="px-4 py-2 bg-gray-300 text-gray-500 rounded cursor-not-allowed">

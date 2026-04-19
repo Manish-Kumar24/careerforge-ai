@@ -2,6 +2,14 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  turbo: {
+    rules: {
+      // Exclude @react-pdf from Turbopack optimization
+      '*.js': {
+        as: '*.js',
+      },
+    },
+  },
   // ✅ Only proxy /api routes to backend, let React handle everything else
   async rewrites() {
     return [
