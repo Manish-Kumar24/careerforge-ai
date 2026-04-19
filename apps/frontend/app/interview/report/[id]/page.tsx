@@ -193,61 +193,117 @@ export default function InterviewReport() {
                   return;
                 }
                 
-                const btn = document.getElementById("pdf-btn") as HTMLButtonElement | null;
-                if (btn) {
-                  btn.disabled = true;
-                  btn.textContent = "Generating PDF...";
-                }
-                
                 try {
-                  // Capture with high quality
-                  const canvas = await html2canvas(element, {
-                    scale: 3, // Higher scale = sharper PDF
-                    useCORS: true,
-                    backgroundColor: "#ffffff",
-                    logging: false,
-                    windowWidth: element.scrollWidth,
-                    windowHeight: element.scrollHeight,
-                  });
-                  
-                  const imgData = canvas.toDataURL("image/png");
-                  const pdf = new jsPDF({
-                    orientation: "portrait",
-                    unit: "mm",
-                    format: "a4",
-                  });
-                  
-                  const imgWidth = 210; // A4 width in mm
-                  const pageHeight = 297; // A4 height in mm
-                  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                  
-let heightLeft = imgHeight;
-let position = 0;
+  // Disable button (typed safely)
+  const btn = document.getElementById("pdf-btn") as HTMLButtonElement | null;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Generating PDF...";
+  }
 
-// First page
-pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-heightLeft -= pageHeight;
+  const element = document.getElementById("report-content");
+  if (!element) throw new Error("Report content not found");
 
-// Additional pages
-while (heightLeft > 0) {
-  position = heightLeft - imgHeight;
-  pdf.addPage();
+  // ✅ Clone element (prevents UI break + fixes CSS issues)
+  const clone = element.cloneNode(true) as HTMLElement;
+
+  // ✅ Sanitize problematic styles
+  clone.querySelectorAll("*").forEach((el: Element) => {
+    const style = (el as HTMLElement).style;
+
+    if (
+      style.color?.includes("lab(") ||
+      style.color?.includes("lch(") ||
+      style.color?.includes("oklab(")
+    ) {
+      style.color = "#374151";
+    }
+
+    if (
+      style.backgroundColor?.includes("lab(") ||
+      style.backgroundColor?.includes("lch(") ||
+      style.backgroundColor?.includes("oklab(")
+    ) {
+      style.backgroundColor = "#ffffff";
+    }
+
+    if (
+      style.color?.startsWith("var(") ||
+      style.backgroundColor?.startsWith("var(")
+    ) {
+      style.color = "";
+      style.backgroundColor = "";
+    }
+  });
+
+  // Hide clone off-screen
+  clone.style.position = "absolute";
+  clone.style.left = "-9999px";
+  clone.style.top = "0";
+  clone.style.width = `${element.offsetWidth}px`;
+
+  document.body.appendChild(clone);
+
+  // ✅ Capture canvas
+  const canvas = await html2canvas(clone, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: "#ffffff",
+    logging: false,
+    ignoreElements: (el: Element) => {
+      const tag = el.tagName.toLowerCase();
+      return tag === "script" || tag === "style" || tag === "link";
+    },
+    onclone: (doc: Document) => {
+      if (doc.body) {
+        doc.body.style.backgroundColor = "#ffffff";
+        doc.body.style.color = "#1f2937";
+      }
+    },
+  });
+
+  document.body.removeChild(clone);
+
+  const imgData = canvas.toDataURL("image/png");
+
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+
+  const imgWidth = 210;
+  const pageHeight = 297;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  let heightLeft = imgHeight;
+  let position = 0;
+
+  // ✅ First page
   pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
   heightLeft -= pageHeight;
-}
 
-// Save PDF
-pdf.save(`interview-report-${sessionId.slice(-8)}.pdf`);
-                  
-                } catch (err: any) {
-                  console.error("PDF generation failed:", err);
-                  alert("Failed to generate PDF. Please try again.");
-                } finally {
-                  if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = "📄 Download Report (PDF)";
-                  }
-                }
+  // ✅ Multi-page support
+  while (heightLeft > 0) {
+    position = heightLeft - imgHeight;
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+  }
+
+  // Save PDF
+  pdf.save(`interview-report-${sessionId.slice(-8)}.pdf`);
+
+} catch (err: any) {
+  console.error("PDF generation failed:", err);
+  alert("Failed to generate PDF. Please try again.\n\nError: " + err.message);
+} finally {
+  const btn = document.getElementById("pdf-btn") as HTMLButtonElement | null;
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = "📄 Download Report (PDF)";
+  }
+}
               }}
               id="pdf-btn"
               className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
