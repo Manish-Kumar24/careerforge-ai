@@ -34,30 +34,62 @@ export default function InterviewReport() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // ✅ FIX: Guard + early return
-    if (!sessionId) { 
-      setError("Invalid session ID");
-      setLoading(false);
-      return; 
-    }
+  if (!sessionId) { 
+    setError("Invalid session ID");
+    setLoading(false);
+    return; 
+  }
 
-    interviewApi.endSession(sessionId, "user_ended")
-      .then(res => {
-        if (res?.report) {
-          setReport(res.report);
-          setError(null);
-        } else {
-          setError("Report data is empty");
-          setReport(null);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch report:", err);
-        setError("Failed to load report data");
+  interviewApi.endSession(sessionId, "user_ended")
+    .then(res => {
+      // ✅ DEEP VALIDATION: Ensure all nested report properties are defined
+      const validateReport = (r: any) => {
+        if (!r || typeof r !== 'object') return null;
+        
+        return {
+          overallScore: typeof r.overallScore === 'number' ? r.overallScore : 0,
+          categoryScores: {
+            technicalAccuracy: typeof r.categoryScores?.technicalAccuracy === 'number' ? r.categoryScores.technicalAccuracy : 0,
+            problemSolving: typeof r.categoryScores?.problemSolving === 'number' ? r.categoryScores.problemSolving : 0,
+            communication: typeof r.categoryScores?.communication === 'number' ? r.categoryScores.communication : 0,
+            codeStructure: typeof r.categoryScores?.codeStructure === 'number' ? r.categoryScores.codeStructure : 0,
+          },
+          perQuestionFeedback: Array.isArray(r.perQuestionFeedback) 
+            ? r.perQuestionFeedback.map((q: any) => ({
+                questionIndex: typeof q?.questionIndex === 'number' ? q.questionIndex : 0,
+                question: typeof q?.question === 'string' ? q.question : '',
+                answer: typeof q?.answer === 'string' ? q.answer : '',
+                answerOriginal: typeof q?.answerOriginal === 'string' ? q.answerOriginal : '',
+                feedback: typeof q?.feedback === 'string' ? q.feedback : '',
+                score: typeof q?.score === 'number' ? q.score : 0,
+                didNotAnswer: q?.didNotAnswer === true,
+              }))
+            : [],
+          strengths: Array.isArray(r.strengths) ? r.strengths.filter((s: any) => typeof s === 'string') : [],
+          improvements: Array.isArray(r.improvements) ? r.improvements.filter((s: any) => typeof s === 'string') : [],
+          nextSteps: Array.isArray(r.nextSteps) ? r.nextSteps.filter((s: any) => typeof s === 'string') : [],
+          meta: {
+            hintsUsed: typeof r.meta?.hintsUsed === 'number' ? r.meta.hintsUsed : 0,
+          }
+        };
+      };
+
+      if (res?.report) {
+        const validatedReport = validateReport(res.report);
+        setReport(validatedReport);
+        setError(null);
+      } else {
+        setError("Report data is empty");
         setReport(null);
-      })
-      .finally(() => setLoading(false));
-  }, [sessionId]);
+      }
+    })
+    .catch((err) => {
+      console.error("Failed to fetch report:", err);
+      setError("Failed to load report data");
+      setReport(null);
+    })
+    .finally(() => setLoading(false));
+}, [sessionId]);
 
   if (loading) {
     return (
