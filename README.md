@@ -73,10 +73,14 @@ cd ai-interview-tracker
 ```
 
 ### 2. Setup Backend
+```bash
 cd apps/backend
+```
 
-# Install dependencies
+### 3. Install dependencies
+```bash
 npm install
+```
 
 # Copy environment template
 cp .env.example .env

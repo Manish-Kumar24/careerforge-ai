@@ -7,17 +7,12 @@ import { useParams, useRouter } from "next/navigation";
 import { interviewApi } from "@/features/interview/api";
 import type { InterviewSession } from "@/types/interview";
 import dynamic from "next/dynamic"; 
+import ReportPDF from "@/components/features/interview/ReportPDF"; // ✅ Direct import
 
 // ✅ Dynamic import for @react-pdf (SSR incompatible)
 const PDFDownloadLink = dynamic(
   () => import("@react-pdf/renderer").then(mod => mod.PDFDownloadLink),
   { ssr: false, loading: () => <span className="text-sm text-gray-500">Preparing PDF...</span> }
-);
-
-// ✅ Dynamic import for the PDF document component
-const ReportPDF = dynamic(
-  () => import("@/components/features/interview/ReportPDF").then(mod => mod.default),
-  { ssr: false }
 );
 
 type ReportState = NonNullable<InterviewSession["report"]> | null;
