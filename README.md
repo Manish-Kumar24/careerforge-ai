@@ -82,16 +82,20 @@ cd apps/backend
 npm install
 ```
 
-# Copy environment template
+### 4. Copy environment template
+```bash
 cp .env.example .env
+```
 
 # Edit .env with your actual values
 # - MONGO_URI: Your MongoDB Atlas connection string
 # - JWT_SECRET: Generate with `openssl rand -hex 32`
 # - GROQ_API_KEY: Your Groq API key
 
-# Start development server
+### 6. Start development server
+```bash
 npm run dev
+```
 
 Backend runs on: http://localhost:5000
 

@@ -43,8 +43,6 @@ const styles = StyleSheet.create({
   
   twoCol: { flexDirection: "row" as const, justifyContent: "space-between" as const, marginBottom: 16 },
   colHalf: { flex: 1 },
-  colLeft: { marginRight: 10 },
-  colRight: { marginLeft: 10 },
   
   qaBlock: {
     marginBottom: 10,
@@ -85,7 +83,7 @@ const styles = StyleSheet.create({
   }
 });
 
-// ✅ Safe bullet renderer (avoids special char rendering bugs)
+// ✅ Safe bullet renderer
 const BulletItem = ({ text }: { text: string }) => (
   <View style={styles.bulletRow}>
     <Text style={styles.bulletDot}>•</Text>
@@ -98,25 +96,34 @@ interface ReportPDFProps {
   sessionId: string;
 }
 
+// ✅ UPDATED SAFER COMPONENT
 const ReportPDF = ({ report, sessionId }: ReportPDFProps) => {
+  // ✅ Comprehensive validation to prevent hasOwnProperty errors
+  const safeReport = {
+    overallScore: report?.overallScore ?? 0,
+    categoryScores: report?.categoryScores && typeof report.categoryScores === 'object' 
+      ? report.categoryScores 
+      : {},
+    strengths: Array.isArray(report?.strengths) ? report.strengths : [],
+    improvements: Array.isArray(report?.improvements) ? report.improvements : [],
+    perQuestionFeedback: Array.isArray(report?.perQuestionFeedback) ? report.perQuestionFeedback : [],
+    meta: report?.meta && typeof report.meta === 'object' ? report.meta : {}
+  };
+
+  // Early return if report is completely invalid
   if (!report) {
     return (
       <Document>
         <Page size="A4" style={styles.page}>
-          <Text style={{ textAlign: "center", marginTop: 100 }}>No report data available.</Text>
+          <Text style={{ textAlign: "center", marginTop: 100 }}>
+            No report data available.
+          </Text>
         </Page>
       </Document>
     );
   }
 
-  const categories = Object.entries(report?.categoryScores || {}) as [string, number][];
-  const strengths = Array.isArray(report.strengths) ? report.strengths : [];
-  const improvements = Array.isArray(report.improvements) ? report.improvements : [];
-  const questions = Array.isArray(report.perQuestionFeedback) ? report.perQuestionFeedback : [];
-
-  // Truncate long answers safely
-  const truncate = (str: string, max = 120) => 
-    str && str.length > max ? str.slice(0, max) + "..." : str || "Not provided";
+  const categories = Object.entries(safeReport.categoryScores) as [string, number][];
 
   return (
     <Document>
@@ -132,51 +139,74 @@ const ReportPDF = ({ report, sessionId }: ReportPDFProps) => {
         {/* Overall Score */}
         <View style={styles.scoreSection}>
           <Text style={styles.scoreLabel}>Overall Score</Text>
-          <Text style={styles.scoreValue}>{report.overallScore || 0}/100</Text>
-          {report.meta?.hintsUsed > 0 && (
-            <Text style={styles.subtitle}>Hints Used: {report.meta.hintsUsed}</Text>
+          <Text style={styles.scoreValue}>{safeReport.overallScore}/100</Text>
+          {typeof safeReport.meta?.hintsUsed === 'number' && safeReport.meta.hintsUsed > 0 && (
+            <Text style={styles.subtitle}>
+              Hints Used: {safeReport.meta.hintsUsed}
+            </Text>
           )}
         </View>
 
         {/* Category Scores */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Category Breakdown</Text>
-          {categories.map(([key, val]: [string, any], i) => (
+          {categories.map(([key, val], i) => (
             <View key={i} style={styles.row}>
               <Text>{key.replace(/([A-Z])/g, " $1").trim()}</Text>
-              <Text style={{ fontWeight: "bold" }}>{val}/100</Text>
+              <Text style={{ fontWeight: "bold" }}>
+                {typeof val === 'number' ? val : 0}/100
+              </Text>
             </View>
           ))}
         </View>
 
-        {/* Strengths & Improvements (2 Columns) */}
+        {/* Strengths & Improvements */}
         <View style={styles.twoCol}>
           <View style={styles.colHalf}>
             <Text style={styles.sectionTitle}>✅ Strengths</Text>
-            {strengths.map((s: string, i: number) => <BulletItem key={i} text={s} />)}
+            {safeReport.strengths.map((s, i) => (
+              <BulletItem key={i} text={typeof s === 'string' ? s : ''} />
+            ))}
           </View>
           <View style={styles.colHalf}>
             <Text style={styles.sectionTitle}>🔧 Improvements</Text>
-            {improvements.map((s: string, i: number) => <BulletItem key={i} text={s} />)}
+            {safeReport.improvements.map((s, i) => (
+              <BulletItem key={i} text={typeof s === 'string' ? s : ''} />
+            ))}
           </View>
         </View>
 
-        {/* Per-Question Feedback */}
+        {/* Per Question Feedback */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Per-Question Feedback</Text>
-          {questions.map((q: any, i: number) => (
-            <View key={i} style={styles.qaBlock} wrap>
-              <Text style={styles.qaQuestion}>Q{q.questionIndex}: {truncate(q.question, 90)}</Text>
-              <Text style={styles.qaFeedback}>{q.feedback}</Text>
-              <Text style={styles.qaAnswer}>Your answer: {truncate(q.answerOriginal || q.answer, 150)}</Text>
-              <View style={styles.scoreBadge}>
-                <Text>Score: {q.score}/100</Text>
+          {safeReport.perQuestionFeedback.map((q, i) => {
+            const question = typeof q?.question === 'string' ? q.question : 'Unknown question';
+            const feedback = typeof q?.feedback === 'string' ? q.feedback : '';
+            const answer = typeof (q?.answerOriginal || q?.answer) === 'string' 
+              ? (q.answerOriginal || q.answer) 
+              : 'No answer provided';
+            const score = typeof q?.score === 'number' ? q.score : 0;
+
+            return (
+              <View key={i} style={styles.qaBlock} wrap>
+                <Text style={styles.qaQuestion}>
+                  Q{i + 1}: {question.slice(0, 90)}
+                  {question.length > 90 ? '...' : ''}
+                </Text>
+                <Text style={styles.qaFeedback}>{feedback}</Text>
+                <Text style={styles.qaAnswer}>
+                  Your answer: {answer.slice(0, 150)}
+                  {answer.length > 150 ? '...' : ''}
+                </Text>
+                <View style={styles.scoreBadge}>
+                  <Text>Score: {score}/100</Text>
+                </View>
               </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
 
-        {/* Fixed Footer */}
+        {/* Footer */}
         <Text style={styles.footer} fixed>
           Generated by CareerForge AI • {new Date().toLocaleString()}
         </Text>
