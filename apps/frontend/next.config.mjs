@@ -2,11 +2,11 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ✅ Disable Turbopack for production builds (required for @react-pdf/renderer)
-  // This only affects `next build`, not `next dev`
-  turbopack: false,
+  // ✅ Next.js 16: turbopack must be an object, not boolean
+  // Empty object disables Turbopack optimizations but keeps Webpack fallbacks
+  turbopack: {},
   
-  // ✅ Only proxy /api routes to backend, let React handle everything else
+  // ✅ Only proxy /api routes to backend
   async rewrites() {
     return [
       {
@@ -16,10 +16,9 @@ const nextConfig = {
     ];
   },
   
-  // ✅ Ensure React app renders for all other routes
   reactStrictMode: true,
   
-  // ✅ Optional: Optimize webpack for @react-pdf/renderer (prevents "module not found")
+  // ✅ Webpack config for @react-pdf/renderer compatibility
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
