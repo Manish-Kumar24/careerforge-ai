@@ -251,7 +251,7 @@ function InterviewDashboardContent() {
               + Start New Loop
             </button>
           </div>
-          
+
           {(() => {
             const now = new Date();
             const activeLoops = (stats.loopProgress || []).filter((loop: any) => {
@@ -270,8 +270,8 @@ function InterviewDashboardContent() {
             return (
               <div className="space-y-3">
                 {activeLoops.map((loop: any) => (
-                  <div 
-                    key={loop.loopId} 
+                  <div
+                    key={loop.loopId}
                     className="p-4 bg-white dark:bg-gray-800 rounded-xl border flex items-center justify-between hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-center gap-4">
@@ -285,7 +285,7 @@ function InterviewDashboardContent() {
                           {loop.completed}/{loop.total}
                         </span>
                       </div>
-                      
+
                       {/* Loop Info */}
                       <div>
                         <div className="font-medium text-gray-900 dark:text-white">
@@ -296,7 +296,7 @@ function InterviewDashboardContent() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Action Button */}
                     <button
                       onClick={() => router.push(`/interview/loop/${loop.loopId}`)}
@@ -316,11 +316,15 @@ function InterviewDashboardContent() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border min-h-[280px]">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Score Trend</h3>
-          <PerformanceChart data={trendData} />
+          {typeof window !== "undefined" && (
+            <PerformanceChart data={trendData} />
+          )}
         </div>
         <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border min-h-[280px]">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Skill Breakdown</h3>
-          <CategoryRadar data={radarData} />
+          {typeof window !== "undefined" && (
+            <CategoryRadar data={radarData} />
+          )}
         </div>
       </div>
 
