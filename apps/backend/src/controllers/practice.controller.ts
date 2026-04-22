@@ -6,13 +6,14 @@ import PracticeProblem from "../models/PracticeProblem";
 import PracticeProgress from "../models/PracticeProgress";
 
 // GET ALL PROBLEMS (with filters)
-export const getProblems = async (req: Request, res: Response) => {
+export const getProblems = async (req: Request, res: Response): Promise<void> => {
   try {
     const { pattern, topic, company, difficulty, status, search, bookmarked } = req.query;
     const userId = (req as any).user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return;
     }
 
     const problemQuery: any = {};
@@ -49,7 +50,8 @@ export const getProblems = async (req: Request, res: Response) => {
         const notStartedIds = allIds.filter((id) => !startedIds.includes(id));
 
         if (notStartedIds.length === 0) {
-          return res.json([]);
+          res.status(200).json([]);
+          return;
         }
         problemQuery._id = { $in: notStartedIds };
       } else if (status === "in-progress" || status === "completed") {
@@ -61,7 +63,8 @@ export const getProblems = async (req: Request, res: Response) => {
         const problemIds = progress.map((p: any) => p.problemId.toString());
 
         if (problemIds.length === 0) {
-          return res.json([]);
+          res.status(200).json([]);
+          return;
         }
         problemQuery._id = { $in: problemIds };
       }
@@ -77,7 +80,8 @@ export const getProblems = async (req: Request, res: Response) => {
       const bookmarkedIds = bookmarkedProgress.map((p: any) => p.problemId.toString());
 
       if (bookmarkedIds.length === 0) {
-        return res.json([]);
+        res.status(200).json([]);
+        return;
       }
 
       // ✅ FIX: Intersect with existing problemQuery._id if it exists
@@ -123,13 +127,14 @@ export const getProblems = async (req: Request, res: Response) => {
 };
 
 // GET PROBLEM BY ID
-export const getProblemById = async (req: Request, res: Response) => {
+export const getProblemById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const problem = await PracticeProblem.findById(id);
 
     if (!problem) {
-      return res.status(404).json({ error: "Problem not found" });
+      res.status(404).json({ error: "Problem not found" });
+      return;
     }
 
     let progress = null;
@@ -148,19 +153,21 @@ export const getProblemById = async (req: Request, res: Response) => {
 };
 
 // UPDATE PROGRESS
-export const updateProgress = async (req: Request, res: Response) => {
+export const updateProgress = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { status, notes, attempts, timeSpent } = req.body;
     const userId = (req as any).user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return;
     }
 
     const problem = await PracticeProblem.findById(id);
     if (!problem) {
-      return res.status(404).json({ error: "Problem not found" });
+      res.status(404).json({ error: "Problem not found" });
+      return;
     }
 
     // ✅ FIX: Only include fields that are defined
@@ -187,12 +194,13 @@ export const updateProgress = async (req: Request, res: Response) => {
 };
 
 // GET USER PROGRESS SUMMARY
-export const getProgressSummary = async (req: Request, res: Response) => {
+export const getProgressSummary = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return;
     }
 
     const totalProblems = await PracticeProblem.countDocuments();
@@ -303,16 +311,22 @@ export const getFilterOptions = async (req: Request, res: Response) => {
 // TIMER FUNCTIONS
 // ============================================
 
-export const startTimer = async (req: Request, res: Response) => {
+export const startTimer = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { targetSeconds } = req.body;
     const userId = (req as any).user?.id;
 
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
 
     const problem = await PracticeProblem.findById(id);
-    if (!problem) return res.status(404).json({ error: "Problem not found" });
+    if (!problem) {
+      res.status(404).json({ error: "Problem not found" });
+      return;
+    }
 
     const seconds = targetSeconds ||
       (problem.difficulty === "easy" ? 900 :
@@ -339,15 +353,21 @@ export const startTimer = async (req: Request, res: Response) => {
   }
 };
 
-export const toggleTimer = async (req: Request, res: Response) => {
+export const toggleTimer = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = (req as any).user?.id;
 
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
 
     const progress = await PracticeProgress.findOne({ userId, problemId: id });
-    if (!progress) return res.status(404).json({ error: "Progress not found" });
+    if (!progress) {
+      res.status(404).json({ error: "Progress not found" });
+      return;
+    }
 
     const timer = progress.timer || {
       targetSeconds: 0,
@@ -395,12 +415,15 @@ export const toggleTimer = async (req: Request, res: Response) => {
   }
 };
 
-export const resetTimer = async (req: Request, res: Response) => {
+export const resetTimer = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = (req as any).user?.id;
 
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
 
     // ✅ Preserve existing timeSpent when resetting timer
     const existingProgress = await PracticeProgress.findOne({ userId, problemId: id });
@@ -428,22 +451,26 @@ export const resetTimer = async (req: Request, res: Response) => {
   }
 };
 
-export const getRemainingTime = async (req: Request, res: Response) => {
+export const getRemainingTime = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = (req as any).user?.id;
 
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
 
     const progress = await PracticeProgress.findOne({ userId, problemId: id });
 
     if (!progress || !progress.timer) {
-      return res.json({
+    res.json({
         remainingSeconds: null,
         isRunning: false,
         targetSeconds: 0,
         isExpired: false,
       });
+      return;
     }
 
     const {
@@ -455,14 +482,15 @@ export const getRemainingTime = async (req: Request, res: Response) => {
 
     if (!isRunning) {
       if (targetSeconds === 0 || !startedAt) {
-        return res.json({
+        res.json({
           remainingSeconds: null,
           isRunning: false,
           targetSeconds: 0,
           isExpired: false,
         });
+        return;
       }
-      return res.json({
+      res.json({
         remainingSeconds: savedRemaining ?? null,
         isRunning: false,
         targetSeconds,
@@ -491,13 +519,14 @@ export const getRemainingTime = async (req: Request, res: Response) => {
 // ✅ BOOKMARK FUNCTION (NEW)
 // ============================================
 
-export const toggleBookmark = async (req: Request, res: Response) => {
+export const toggleBookmark = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = (req as any).user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return;
     }
 
     const progress = await PracticeProgress.findOne({ userId, problemId: id });
@@ -510,7 +539,8 @@ export const toggleBookmark = async (req: Request, res: Response) => {
         isBookmarked: true,
         status: "not-started",
       });
-      return res.json(newProgress);
+      res.json(newProgress);
+      return;
     }
 
     // Toggle existing bookmark

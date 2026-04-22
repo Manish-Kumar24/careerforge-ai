@@ -41,16 +41,18 @@ const parseQueryArray = (value: SafeQueryValue): SafeString[] | undefined => {
 };
 
 // ========== PRACTICE MODE ==========
-export const startPracticeSession = async (req: Request, res: Response) => {
+export const startPracticeSession = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id || req.user?._id;
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      return;
     }
     const { type, difficulty, durationMinutes, companyTag, resumeText, jdText } = req.body;
 
     if (!type || !difficulty || !durationMinutes) {
-      return res.status(400).json({ error: "type, difficulty, and durationMinutes are required" });
+      res.status(400).json({ error: "type, difficulty, and durationMinutes are required" });
+      return;
     }
 
     // Validate enum values
@@ -58,9 +60,18 @@ export const startPracticeSession = async (req: Request, res: Response) => {
     const validDifficulties: Difficulty[] = ["EASY", "MEDIUM", "HARD"];
     const validDurations: (30 | 45 | 60)[] = [30, 45, 60];
 
-    if (!validTypes.includes(type)) return res.status(400).json({ error: "Invalid interview type" });
-    if (!validDifficulties.includes(difficulty)) return res.status(400).json({ error: "Invalid difficulty" });
-    if (!validDurations.includes(durationMinutes)) return res.status(400).json({ error: "Invalid duration" });
+    if (!validTypes.includes(type)) {
+      res.status(400).json({ error: "Invalid interview type" });
+      return;
+    }
+    if (!validDifficulties.includes(difficulty)) {
+      res.status(400).json({ error: "Invalid difficulty" });
+      return;
+    }
+    if (!validDurations.includes(durationMinutes)) {
+      res.status(400).json({ error: "Invalid duration" });
+      return;
+    }
 
     // Create session
     const session = await InterviewSession.create({
@@ -108,17 +119,19 @@ export const startPracticeSession = async (req: Request, res: Response) => {
 };
 
 // ========== LOOP MODE ==========
-export const createInterviewLoop = async (req: Request, res: Response) => {
+export const createInterviewLoop = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id || req.user?._id; // ✅ FIX
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      return;
     }
     const { company, role, templateKey, resumeText, jdText } = req.body;
 
     const template = getTemplate(templateKey);
     if (!template) {
-      return res.status(400).json({ error: "Invalid template key" });
+      res.status(400).json({ error: "Invalid template key" });
+      return;
     }
 
     // Calculate round schedule
@@ -162,12 +175,13 @@ export const createInterviewLoop = async (req: Request, res: Response) => {
   }
 };
 
-export const startLoopRound = async (req: Request, res: Response) => {
+export const startLoopRound = async (req: Request, res: Response): Promise<void> => {
   try {
     // ✅ FIX: Consistent userId extraction
     const userId = req.user?.id || req.user?._id;
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      return;
     }
 
     // ✅ FIX: Properly parse route params with validation
@@ -176,24 +190,27 @@ export const startLoopRound = async (req: Request, res: Response) => {
     const roundNumber = parseInt(roundNumberStr, 10);
 
     if (isNaN(roundNumber)) {
-      return res.status(400).json({ error: "Invalid round number" });
+      res.status(400).json({ error: "Invalid round number" });
+      return;
     }
 
     // Fetch loop + validate ownership
     const loop = await InterviewLoop.findOne({ _id: loopId, userId });
     if (!loop) {
-      return res.status(404).json({ error: "Interview loop not found" });
+      res.status(404).json({ error: "Interview loop not found" });
+      return;
     }
 
     // Find round config
     const roundConfig = loop.rounds.find(r => r.roundNumber === roundNumber);
     if (!roundConfig) {
-      return res.status(404).json({ error: "Round not found in loop" });
+      res.status(404).json({ error: "Round not found in loop" });
+      return;
     }
 
     // Check availability
     if (!isRoundAvailable(roundConfig.scheduledDate)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: `Round unlocks on ${roundConfig.scheduledDate.toISOString()}`
       });
     }
@@ -251,31 +268,35 @@ const session = await InterviewSession.create({
   }
 };
 // ========== SHARED SESSION ENDPOINTS ==========
-export const submitAnswer = async (req: Request, res: Response) => {
+export const submitAnswer = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id || req.user?._id; // ✅ FIX
     const sessionId = parseRouteParam(req.params.id, "sessionId");
     const { answer } = req.body;
 
     if (!answer) {
-      return res.status(400).json({ error: "answer is required" });
+      res.status(400).json({ error: "answer is required" });
+      return;
     }
 
     // Fetch session + validate ownership
     const session = await InterviewSession.findOne({ _id: sessionId, userId });
     if (!session) {
-      return res.status(404).json({ error: "Session not found" });
+      res.status(404).json({ error: "Session not found" });
+      return;
     }
 
     if (session.status !== "in_progress") {
-      return res.status(400).json({ error: "Session is not active" });
+      res.status(400).json({ error: "Session is not active" });
+      return;
     }
 
     // Validate timer
     if (session.startTime && !validateSubmissionTime(session.startTime, session.durationMinutes)) {
       session.status = "expired";
       await session.save();
-      return res.status(400).json({ error: "Time expired" });
+      res.status(400).json({ error: "Time expired" });
+      return;
     }
 
     // Log user answer
@@ -305,20 +326,22 @@ export const submitAnswer = async (req: Request, res: Response) => {
   }
 };
 
-export const requestHint = async (req: Request, res: Response) => {
+export const requestHint = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id || req.user?._id; // ✅ FIX
     const sessionId = parseRouteParam(req.params.id, "sessionId");
 
     const session = await InterviewSession.findOne({ _id: sessionId, userId });
     if (!session || session.status !== "in_progress") {
-      return res.status(404).json({ error: "Active session not found" });
+      res.status(404).json({ error: "Active session not found" });
+      return;
     }
 
     // Get last AI question for context
     const lastAI = [...session.conversation].reverse().find(m => m.role === "ai");
     if (!lastAI) {
-      return res.status(400).json({ error: "No question to hint on" });
+      res.status(400).json({ error: "No question to hint on" });
+      return;
     }
 
     // Generate hint (stub)
@@ -335,7 +358,7 @@ export const requestHint = async (req: Request, res: Response) => {
   }
 };
 
-export const endSession = async (req: Request, res: Response) => {
+export const endSession = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id || req.user?._id; // ✅ FIX
     const sessionId = parseRouteParam(req.params.id, "sessionId");
@@ -343,7 +366,8 @@ export const endSession = async (req: Request, res: Response) => {
 
     const session = await InterviewSession.findOne({ _id: sessionId, userId });
     if (!session) {
-      return res.status(404).json({ error: "Session not found" });
+      res.status(404).json({ error: "Session not found" });
+      return;
     }
 
     // Mark as completed/expired
@@ -398,11 +422,12 @@ if (session.mode === "loop" && session.loopId && session.roundNumber) {
   }
 };
 
-export const getSessionById = async (req: Request, res: Response) => {
+export const getSessionById = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id || req.user?._id;
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      return;
     }
     
     const sessionId = parseRouteParam(req.params.id, "sessionId");
@@ -411,7 +436,8 @@ export const getSessionById = async (req: Request, res: Response) => {
       .select("-personalization"); // Exclude sensitive fields
     
     if (!session) {
-      return res.status(404).json({ error: "Session not found" });
+      res.status(404).json({ error: "Session not found" });
+      return;
     }
     
     // ✅ Ensure these fields are returned for frontend:
@@ -473,13 +499,14 @@ export const getInterviewHistory = async (req: Request, res: Response) => {
   }
 };
 
-export const getLoopHistory = async (req: Request, res: Response) => {
+export const getLoopHistory = async (req: Request, res: Response): Promise<void> => {
   try {
     // ✅ FIX: Consistent userId extraction
     const userId = req.user?.id || req.user?._id;
     const userIdObj = new Types.ObjectId(userId);
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      return;
     }
 
     // ✅ FIX: Properly parse query params
@@ -503,11 +530,12 @@ export const getLoopHistory = async (req: Request, res: Response) => {
   }
 };
 
-export const getDashboardStats = async (req: Request, res: Response) => {
+export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id || req.user?._id;
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      return;
     }
     
     // ✅ FIX: Convert string userId to ObjectId for aggregation pipelines
@@ -638,25 +666,28 @@ res.json({
 };
 
 // ========== NEW: Fetch single loop by ID ==========
-export const getLoopById = async (req: Request, res: Response) => {
+export const getLoopById = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id || req.user?._id;
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      return;
     }
 
     const { id: loopId } = req.params;
     
     // Validate loopId format
     if (!loopId || typeof loopId !== "string" || loopId.length !== 24) {
-      return res.status(400).json({ error: "Invalid loop ID format" });
+      res.status(400).json({ error: "Invalid loop ID format" });
+      return;
     }
 
     // Fetch loop with ownership check
     const loop = await InterviewLoop.findOne({ _id: loopId, userId }).lean();
     
     if (!loop) {
-      return res.status(404).json({ error: "Interview loop not found" });
+      res.status(404).json({ error: "Interview loop not found" });
+      return;
     }
 
     res.json(loop);

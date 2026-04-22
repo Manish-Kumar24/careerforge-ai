@@ -12,24 +12,28 @@ declare global {
         id?: string;
         userId?: string;
         email?: string;
-        [key: string]: any; // Allow additional properties from JWT
+        [key: string]: any; 
       };
     }
   }
 }
 
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+// ✅ FIX 1: Return type is `void` (not Promise<void>) because function is NOT async
+export const authMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   try {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Unauthorized: No token provided" });
+      // ✅ FIX 2: Call res.json() without return, then explicit void return
+      res.status(401).json({ error: "Unauthorized: No token provided" });
+      return; // ✅ Explicit void return to exit early
     }
 
     const token = authHeader.split(" ")[1];
     
     if (!token) {
-      return res.status(401).json({ error: "Unauthorized: Invalid token format" });
+      res.status(401).json({ error: "Unauthorized: Invalid token format" });
+      return;
     }
 
     // ✅ Verify token synchronously
@@ -37,15 +41,18 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     
     // ✅ Type guard: jwt.verify can return string or JwtPayload
     if (typeof decoded === "string") {
-      // This shouldn't happen with our JWT setup, but handle safely
-      return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      return; // ✅ Explicit void return
     }
 
     // ✅ Safe assignment: decoded is now known to be JwtPayload
     req.user = decoded;
-    next();
+    next(); // ✅ Continue to next middleware/route
+    // ✅ No return needed at end - function ends naturally with void
+    
   } catch (error: any) {
     console.error("Auth middleware error:", error.message);
-    return res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
+    res.status(401).json({ error: "Unauthorized: Invalid or expired token" });
+    // ✅ No return needed - response already sent
   }
 };

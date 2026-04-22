@@ -5,12 +5,13 @@ import User from "../models/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-export const signup = async (req: Request, res: Response) => {
+export const signup = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
+      res.status(400).json({ message: "Email and password required" });
+      return;
     }
 
     const hashed = await bcrypt.hash(password, 10);
@@ -25,7 +26,7 @@ export const signup = async (req: Request, res: Response) => {
     // 🔥 Handle duplicate email specifically
     if (error.code === 11000 && error.keyPattern?.email) {
       console.log(`⚠️ Duplicate signup attempt for: ${error.keyValue.email}`);
-      return res.status(409).json({ 
+      res.status(409).json({ 
         message: "Email already registered",
         error: "This email is already in use. Please login or use a different email."
       });
@@ -50,29 +51,33 @@ export const signup = async (req: Request, res: Response) => {
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
+      res.status(400).json({ message: "Email and password required" });
+      return;
     }
 
     const user = await User.findOne({ email });
 
     if (!user || !user.password) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      res.status(400).json({ message: "Invalid credentials" });
+      return;
     }
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      res.status(400).json({ message: "Invalid credentials" });
+      return;
     }
 
     // ✅ Validate JWT_SECRET before signing
     if (!process.env.JWT_SECRET) {
       console.error("❌ JWT_SECRET is not set in environment!");
-      return res.status(500).json({ message: "Server configuration error" });
+      res.status(500).json({ message: "Server configuration error" });
+      return;
     }
 
     const token = jwt.sign(
@@ -94,35 +99,5 @@ export const login = async (req: Request, res: Response) => {
       message: "Login failed", 
       error: error.message || "Unknown error" 
     });
-  }
-};
-
-// ✅ VERIFY TOKEN AND RETURN USER
-export const getMe = async (req: Request, res: Response) => {
-  try {
-    // authMiddleware already attached user to req.user
-    const user = req.user;
-    
-    if (!user || !user.id) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    
-    // Fetch full user from DB (optional, but good practice)
-    const userData = await User.findById(user.id).select("-password");
-    
-    if (!userData) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    
-    res.json({ 
-      user: { 
-        id: userData._id, 
-        email: userData.email 
-        // Add other non-sensitive fields as needed
-      } 
-    });
-  } catch (error: any) {
-    console.error("❌ GET_ME ERROR:", error);
-    res.status(500).json({ error: "Failed to fetch user" });
   }
 };

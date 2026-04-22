@@ -3,12 +3,13 @@
 import { Request, Response } from "express";
 import { askGroq } from "../services/ai.service";
 
-export const askAI = async (req: Request, res: Response) => {
+export const askAI = async (req: Request, res: Response): Promise<void> => {
   try {
     const { prompt } = req.body;
 
     if (!prompt) {
-      return res.status(400).json({ error: "Prompt is required" });
+      res.status(400).json({ error: "Prompt is required" });
+      return;
     }
 
     const answer = await askGroq(prompt);

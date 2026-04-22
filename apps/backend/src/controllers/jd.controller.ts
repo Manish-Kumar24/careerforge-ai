@@ -6,26 +6,39 @@ import ResumeAnalysis from "../models/ResumeAnalysis";
 import { cleanJDText } from "../services/resume/jdParser";
 import { matchResumeWithJD } from "../services/resume/jdMatcher";
 
-export const matchWithJD = async (req: Request, res: Response) => {
+export const matchWithJD = async (req: Request, res: Response): Promise<void> => {
   try {
     // ✅ FIX: Flexible userId extraction (same as resume.controller.ts)
     const userId = (req.user as any)?._id || (req.user as any)?.id || (req.user as any)?.userId;
-    if (!userId) return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      return;
+    }
 
     const { resumeId, jdText, jdTitle } = req.body;
     
     // ✅ Text-only validation
-    if (!resumeId) return res.status(400).json({ error: "resumeId is required" });
-    if (!jdText) return res.status(400).json({ error: "jdText is required" });
+    if (!resumeId) {
+      res.status(400).json({ error: "resumeId is required" });
+      return;
+    }
+    if (!jdText) {
+      res.status(400).json({ error: "jdText is required" });
+      return;
+    }
 
     // 1. Fetch resume (ensure ownership)
     const resume = await ResumeAnalysis.findOne({ _id: resumeId, userId });
-    if (!resume) return res.status(404).json({ error: "Resume analysis not found" });
+    if (!resume) {
+      res.status(404).json({ error: "Resume analysis not found" });
+      return;
+    }
 
     // 2. Clean JD text (text-only)
     const cleanedJD = cleanJDText(jdText);
     if (!cleanedJD || cleanedJD.length < 50) {
-      return res.status(400).json({ error: "Job description is too short or invalid" });
+      res.status(400).json({ error: "Job description is too short or invalid" });
+      return;
     }
 
     // 3. Run AI matching
@@ -57,10 +70,13 @@ export const matchWithJD = async (req: Request, res: Response) => {
   }
 };
 
-export const getMatchHistory = async (req: Request, res: Response) => {
+export const getMatchHistory = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req.user as any)?._id || (req.user as any)?.id || (req.user as any)?.userId;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
 
     const { resumeId } = req.query;
     const query: any = { userId };
@@ -78,10 +94,13 @@ export const getMatchHistory = async (req: Request, res: Response) => {
   }
 };
 
-export const getMatchById = async (req: Request, res: Response) => {
+export const getMatchById = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req.user as any)?._id || (req.user as any)?.id || (req.user as any)?.userId;
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
 
     const { id } = req.params;
     
@@ -89,7 +108,8 @@ export const getMatchById = async (req: Request, res: Response) => {
       .populate("resumeId", "originalFilename aiScore");
     
     if (!match) {
-      return res.status(404).json({ error: "Match not found" });
+      res.status(404).json({ error: "Match not found" });
+      return;
     }
     
     res.json(match);
