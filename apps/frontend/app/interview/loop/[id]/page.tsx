@@ -39,14 +39,14 @@ export default function LoopDashboard() {
     }
     try {
       const loopData = await interviewApi.getLoopById(loopId);
-      
+
       // ✅ DEBUG: Log round statuses and scheduledDates (proper comment syntax)
       console.log("🔍 DEBUG: Loop rounds:", loopData.rounds.map((r: any) => ({
         round: r.roundNumber,
         status: r.status,
         scheduledDate: r.scheduledDate
       })));
-      
+
       setLoop(loopData);
       setError(null);
       setLastRefreshed(new Date());
@@ -81,24 +81,24 @@ export default function LoopDashboard() {
   // Real-time countdown (ticks every second)
   useEffect(() => {
     if (!loop) return;
-    
+
     const updateCountdowns = () => {
       const now = new Date();
       const newCountdowns: Record<number, string> = {};
-      
+
       loop.rounds.forEach((round: Round) => {
         if (round.status === "scheduled") {
           // ✅ Use stored scheduledDate directly from API (never recalculate)
           const scheduled = new Date(round.scheduledDate);
           const diffMs = scheduled.getTime() - now.getTime();
-          
+
           if (diffMs <= 0) {
             newCountdowns[round.roundNumber] = "Available now";
           } else {
             const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-            
+
             if (days > 0) {
               newCountdowns[round.roundNumber] = `${days}d ${hours}h`;
             } else if (hours > 0) {
@@ -109,10 +109,10 @@ export default function LoopDashboard() {
           }
         }
       });
-      
+
       setCountdowns(newCountdowns);
     };
-    
+
     updateCountdowns();
     const interval = setInterval(updateCountdowns, 1000);
     return () => clearInterval(interval);
@@ -126,7 +126,7 @@ export default function LoopDashboard() {
         if (!prev) return prev;
         return {
           ...prev,
-          rounds: prev.rounds.map(r => 
+          rounds: prev.rounds.map(r =>
             r.roundNumber === roundNumber ? { ...r, status: "scheduled" as const } : r
           ),
           status: "in_progress"
@@ -158,7 +158,7 @@ export default function LoopDashboard() {
   // ✅ FIX: Button logic with correct status checks
   const getRoundActionButton = (round: Round) => {
     const isCurrent = startingRound === round.roundNumber;
-    
+
     if (round.status === "completed") {
       return (
         <button
@@ -170,23 +170,22 @@ export default function LoopDashboard() {
         </button>
       );
     }
-    
+
     if (isRoundAvailable(round)) {
       return (
         <button
           onClick={() => startRound(round.roundNumber)}
           disabled={isCurrent}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${
-            isCurrent
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${isCurrent
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700 text-white"
-          }`}
+            }`}
         >
           {isCurrent ? "Starting..." : <><Play className="w-4 h-4" /> Start Round</>}
         </button>
       );
     }
-    
+
     return (
       <span className="px-4 py-2 text-sm font-medium text-gray-500 bg-gray-200 dark:bg-gray-700 rounded-lg cursor-not-allowed flex items-center gap-1">
         <Lock className="w-4 h-4" /> Locked
@@ -248,11 +247,10 @@ export default function LoopDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              loop.status === "completed" ? "bg-green-100 text-green-700" :
-              loop.status === "in_progress" ? "bg-blue-100 text-blue-700" :
-              "bg-gray-100 text-gray-700"
-            }`}>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${loop.status === "completed" ? "bg-green-100 text-green-700" :
+                loop.status === "in_progress" ? "bg-blue-100 text-blue-700" :
+                  "bg-gray-100 text-gray-700"
+              }`}>
               {loop.status.replace("_", " ").toUpperCase()}
             </span>
             <button
@@ -270,25 +268,23 @@ export default function LoopDashboard() {
       <div className="space-y-4">
         {loop.rounds.map((round: Round) => {
           const available = isRoundAvailable(round);
-          
+
           return (
             <div
               key={round.roundNumber}
-              className={`p-4 border rounded-xl transition-all ${
-                round.status === "completed"
+              className={`p-4 border rounded-xl transition-all ${round.status === "completed"
                   ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
                   : available
-                  ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 hover:shadow-md"
-                  : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-              }`}
+                    ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 hover:shadow-md"
+                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">
                   {/* Round Number Badge */}
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                    round.status === "completed" ? "bg-green-500 text-white" :
-                    available ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-600"
-                  }`}>
+                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold ${round.status === "completed" ? "bg-green-500 text-white" :
+                      available ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-600"
+                    }`}>
                     {getRoundStatusIcon(round)}
                   </div>
 
@@ -307,8 +303,8 @@ export default function LoopDashboard() {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          {round.status === "completed" 
-                            ? "Completed" 
+                          {round.status === "completed"
+                            ? "Completed"
                             : (countdowns[round.roundNumber] as string) || "Calculating..."}
                         </span>
                       </div>
@@ -341,10 +337,11 @@ export default function LoopDashboard() {
         </button>
         {loop.status === "completed" && (
           <button
-            onClick={() => router.push(`/interview/report/${loop._id}`)}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm"
+            disabled
+            title="Loop summary reports coming soon"
+            className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-sm cursor-not-allowed"
           >
-            View Loop Summary Report
+            View Loop Summary Report (Coming Soon)
           </button>
         )}
       </div>
