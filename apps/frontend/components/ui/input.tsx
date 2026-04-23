@@ -1,6 +1,12 @@
 // apps\frontend\components\ui\input.tsx
 
-export function Input({ className = "", ...props }) {
+import { InputHTMLAttributes } from "react";
+
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  className?: string;
+}
+
+export function Input({ className = "", ...props }: InputProps) {
   return (
     <input
       className={`w-full px-3 py-2 rounded-lg border 
