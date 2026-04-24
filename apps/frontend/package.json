@@ -19,7 +19,11 @@
     "react": "18",
     "react-dom": "18",
     "react-dropzone": "^15.0.0",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.1",
     "recharts": "^3.8.1",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
     "zustand": "^4.5.0"
   },
   "devDependencies": {
