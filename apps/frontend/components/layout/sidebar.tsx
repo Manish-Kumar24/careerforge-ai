@@ -5,13 +5,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "./sidebar-context";
+import { Menu } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { isCollapsed, isMobileOpen, toggleCollapse, closeMobile } = useSidebar();
 
   const isActive = (href: string) => pathname === href;
-  
+
   const navItems = [
     { id: "dashboard", href: "/dashboard", icon: "📊", label: "Dashboard" },
     { id: "applications", href: "/applications", icon: "📋", label: "Applications" },
@@ -60,6 +61,14 @@ export default function Sidebar() {
               {isCollapsed ? "→" : "←"}
             </button>
           </div>
+          <div className="md:hidden absolute top-4 left-4 z-50">
+            <button
+              onClick={() => {/* Trigger chat history sidebar open */ }}
+              className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
 
           {/* Navigation */}
           <nav className="flex flex-col gap-2">
@@ -74,8 +83,8 @@ export default function Sidebar() {
                     : "hover:bg-gray-100 dark:hover:bg-gray-800"
                   }
                 ${isCollapsed ? "justify-center" : ""}`}
-                // ✅ FIX: Remove title attribute to prevent hydration mismatch
-                // title={isCollapsed ? item.label : undefined}
+              // ✅ FIX: Remove title attribute to prevent hydration mismatch
+              // title={isCollapsed ? item.label : undefined}
               >
                 <span className="text-xl">{item.icon}</span>
                 {!isCollapsed && (

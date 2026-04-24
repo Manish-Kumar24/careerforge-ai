@@ -268,9 +268,9 @@ ${msg.a}
               <div className="relative group my-4 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
                 {/* Language header with copy button */}
                 <div className="flex items-center justify-between px-4 py-2.5 bg-[#21252b] text-[#abb2bf] text-xs font-mono border-b border-[#3e4451]">                  <span className="flex items-center gap-2">
-                    <Code className="w-3 h-3" />
-                    {match[1].toUpperCase()}
-                  </span>
+                  <Code className="w-3 h-3" />
+                  {match[1].toUpperCase()}
+                </span>
                   <button
                     key={copiedCode === codeId ? "copied" : "copy"}
                     onClick={() => copyCode(codeContent, codeId)}
@@ -397,7 +397,7 @@ ${msg.a}
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-blue-500" />
-                AI Assistant
+                Stuck? Ask for Help
               </h1>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
                 Ask questions about interviews, resumes, or career advice
@@ -418,6 +418,15 @@ ${msg.a}
                   <Download className="w-4 h-4" />
                 )}
                 Export
+              </Button>
+
+              <Button
+                onClick={() => setChat([])}
+                variant="ghost"
+                size="sm"
+                className="text-gray-500 hover:text-gray-700"
+              >
+                Clear
               </Button>
               {/* Keyboard Shortcuts Hint */}
               <div className="hidden md:flex items-center gap-1 px-2.5 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-md text-xs text-gray-500 dark:text-gray-400">
@@ -592,8 +601,9 @@ ${msg.a}
 
         {/* Premium Input Area - Pinned to Bottom */}
         <div className="flex-shrink-0 p-4 border-t border-gray-200/80 dark:border-gray-800/80 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-          <div className="flex gap-3 max-w-4xl mx-auto items-end">
-            <div className="flex-1 relative">
+          {/* ✅ FIX: Changed max-w-4xl to max-w-5xl, gap-3 to gap-2 for tighter spacing */}
+          <div className="flex gap-2 w-full max-w-5xl mx-auto items-end">
+            <div className="relative flex-1 min-w-0"> {/* ✅ Added min-w-0 to prevent flex shrinking */}
               <Input
                 ref={inputRef}
                 value={input}
@@ -603,18 +613,19 @@ ${msg.a}
                 disabled={loading}
                 onFocus={() => setShowToolbar(true)}
                 onBlur={() => setTimeout(() => setShowToolbar(false), 200)}
-                className="flex-1 !w-auto min-w-0 pr-10
-                         text-gray-900 dark:text-gray-100 
-                         placeholder-gray-400 dark:placeholder-gray-500
-                         bg-white dark:bg-gray-800
-                         border-gray-300 dark:border-gray-600
-                         focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
-                         transition-all duration-200"
+                // ✅ FIX: Removed !w-auto, added w-full so it stretches properly
+                className="w-full min-w-0 pr-10 py-2.5
+                 text-gray-900 dark:text-gray-100 
+                 placeholder-gray-400 dark:placeholder-gray-500
+                 bg-white dark:bg-gray-800
+                 border-gray-300 dark:border-gray-600
+                 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
+                 transition-all duration-200"
               />
               {/* Toolbar toggle hint */}
               <button
                 onClick={() => setShowToolbar(!showToolbar)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded hover:bg-gray-100 dark:hover:bg-gray-700"
                 title="Markdown toolbar"
               >
                 <Code className="w-4 h-4" />
@@ -623,13 +634,14 @@ ${msg.a}
             <Button
               onClick={send}
               disabled={loading || !input.trim()}
-              className="!w-auto shrink-0 px-5 py-2.5 min-w-[70px] 
-                       whitespace-nowrap
-                       bg-gradient-to-r from-blue-600 to-blue-700 
-                       hover:from-blue-700 hover:to-blue-800
-                       focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2
-                       dark:focus:ring-offset-gray-900
-                       transition-all duration-200 shadow-sm hover:shadow"
+              // ✅ FIX: Removed !w-auto, added h-[42px] to match input height perfectly
+              className="shrink-0 px-5 py-2.5 h-[42px]
+               whitespace-nowrap
+               bg-gradient-to-r from-blue-600 to-blue-700 
+               hover:from-blue-700 hover:to-blue-800
+               focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2
+               dark:focus:ring-offset-gray-900
+               transition-all duration-200 shadow-sm hover:shadow"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

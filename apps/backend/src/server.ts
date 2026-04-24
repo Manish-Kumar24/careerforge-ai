@@ -15,6 +15,7 @@ import practiceRoutes from "./routes/practice.routes";
 import jdRoutes from "./routes/jd.routes"; // ✅ ADD THIS
 import mockInterviewRoutes from "./routes/mockInterview.routes";
 import aiSummaryRoutes from "./routes/aiSummary.routes"; 
+import aiChatRoutes from "./routes/aiChat.routes";
 
 connectDB();
 
@@ -65,6 +66,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/ai/sessions", aiChatRoutes);
 app.use("/api/interviews", interviewRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/practice", practiceRoutes);
