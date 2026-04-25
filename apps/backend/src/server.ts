@@ -16,6 +16,7 @@ import jdRoutes from "./routes/jd.routes"; // ✅ ADD THIS
 import mockInterviewRoutes from "./routes/mockInterview.routes";
 import aiSummaryRoutes from "./routes/aiSummary.routes"; 
 import aiChatRoutes from "./routes/aiChat.routes";
+import dashboardRoutes from "./routes/dashboard.routes";
 
 connectDB();
 
@@ -74,6 +75,7 @@ app.use("/api/resume", resumeRoutes);
 app.use("/api/jd", jdRoutes); 
 app.use("/api/mock-interview", mockInterviewRoutes); 
 app.use("/api/ai-summary", aiSummaryRoutes); 
+app.use("/api/dashboard", dashboardRoutes);
 
 // ✅ Add health check for deployment testing
 app.get("/api/health", (req, res) => {

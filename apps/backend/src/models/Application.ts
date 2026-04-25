@@ -44,10 +44,10 @@ const applicationSchema = new mongoose.Schema(
         // ✅ NEW: Timeline for tracking all activities
         timeline: [{
             note: { type: String, required: true },
-            type: { 
-                type: String, 
-                enum: ["manual", "status_change", "priority_toggle", "created"], 
-                default: "manual" 
+            type: {
+                type: String,
+                enum: ["manual", "status_change", "priority_toggle", "created"],
+                default: "manual"
             },
             createdAt: { type: Date, default: Date.now },
         }],
