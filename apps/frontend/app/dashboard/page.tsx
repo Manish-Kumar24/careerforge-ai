@@ -8,11 +8,12 @@ import Navbar from "../../components/layout/navbar";
 import { useSidebar } from "../../components/layout/sidebar-context";
 import { useAuth } from "../../store/useAuth";
 import { dashboardApi, DashboardStats } from "../../features/dashboard/api";
+import ExportReportButton from "@/components/features/dashboard/ExportReportButton";
 
 export default function Dashboard() {
   const { isCollapsed } = useSidebar();
   const { email } = useAuth();
-  
+
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
-    
+
     fetchStats();
   }, []);
 
@@ -82,38 +83,44 @@ export default function Dashboard() {
         <Navbar />
 
         {/* Welcome Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Welcome Back, {getUserName()} 👋
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-            Here's your progress overview
-          </p>
+        <div className="p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Welcome Back, {getUserName()} 👋
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+              Here's your progress overview
+            </p>
+          </div>
+
+          {/* ✅ EXPORT BUTTON - Render the component */}
+          {stats && !loading && (
+            <ExportReportButton stats={stats} email={email || "user@example.com"} />
+          )}
         </div>
 
         {/* Stats Grid - Now 2 Rich Cards */}
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          
+
           {/* ✅ APPLICATIONS CARD */}
           <div className="p-6 bg-white dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800">
             <div className="flex items-center justify-between mb-4">
               <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Applications</p>
               {stats?.applicationSuccessRate !== undefined && (
-                <span className={`text-sm font-semibold ${
-                  stats.applicationSuccessRate >= 70 ? 'text-green-600 dark:text-green-400' :
-                  stats.applicationSuccessRate >= 40 ? 'text-yellow-600 dark:text-yellow-400' :
-                  'text-red-600 dark:text-red-400'
-                }`}>
+                <span className={`text-sm font-semibold ${stats.applicationSuccessRate >= 70 ? 'text-green-600 dark:text-green-400' :
+                    stats.applicationSuccessRate >= 40 ? 'text-yellow-600 dark:text-yellow-400' :
+                      'text-red-600 dark:text-red-400'
+                  }`}>
                   {stats.applicationSuccessRate}% Success
                 </span>
               )}
             </div>
-            
+
             {loading ? (
               <div className="space-y-3">
                 <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-12 animate-pulse" />
                 <div className="space-y-2">
-                  {[1,2,3,4].map(i => <div key={i} className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse" />)}
+                  {[1, 2, 3, 4].map(i => <div key={i} className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse" />)}
                 </div>
               </div>
             ) : error ? (
@@ -124,7 +131,7 @@ export default function Dashboard() {
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
                   {stats?.applications ?? 0}
                 </h2>
-                
+
                 {/* Status Breakdown */}
                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                   {stats?.applicationBreakdown && Object.entries(stats.applicationBreakdown)
@@ -134,7 +141,7 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-400">No applications yet</p>
                   )}
                 </div>
-                
+
                 {/* Progress Bar */}
                 {stats?.applications && stats.applications > 0 && (
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -143,7 +150,7 @@ export default function Dashboard() {
                       <span>{stats.applicationBreakdown?.offer || 0}/{stats.applications}</span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div 
+                      <div
                         className="bg-green-500 h-2 rounded-full transition-all"
                         style={{ width: getProgressWidth(stats.applicationBreakdown?.offer || 0, stats.applications) }}
                       />
@@ -159,16 +166,15 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-4">
               <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">DSA Progress</p>
               {stats?.dsaSuccessRate !== undefined && (
-                <span className={`text-sm font-semibold ${
-                  stats.dsaSuccessRate >= 70 ? 'text-green-600 dark:text-green-400' :
-                  stats.dsaSuccessRate >= 40 ? 'text-yellow-600 dark:text-yellow-400' :
-                  'text-red-600 dark:text-red-400'
-                }`}>
+                <span className={`text-sm font-semibold ${stats.dsaSuccessRate >= 70 ? 'text-green-600 dark:text-green-400' :
+                    stats.dsaSuccessRate >= 40 ? 'text-yellow-600 dark:text-yellow-400' :
+                      'text-red-600 dark:text-red-400'
+                  }`}>
                   {stats.dsaSuccessRate}% Complete
                 </span>
               )}
             </div>
-            
+
             {loading ? (
               <div className="space-y-3">
                 <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-12 animate-pulse" />
@@ -185,7 +191,7 @@ export default function Dashboard() {
                 <p className="text-xs text-gray-400 mb-4">
                   of {stats?.dsaTotal ?? 0} problems
                 </p>
-                
+
                 {/* Progress Bar with Segments */}
                 {stats?.dsaProgress && stats.dsaTotal && stats.dsaTotal > 0 && (
                   <div className="space-y-3">
@@ -193,13 +199,13 @@ export default function Dashboard() {
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                       <div className="flex h-full">
                         {/* Completed Segment */}
-                        <div 
+                        <div
                           className="bg-green-500 transition-all"
                           style={{ width: getProgressWidth(stats.dsaProgress.completed, stats.dsaTotal) }}
                           title={`${stats.dsaProgress.completed} completed`}
                         />
                         {/* In-Progress Segment */}
-                        <div 
+                        <div
                           className="bg-yellow-500 transition-all"
                           style={{ width: getProgressWidth(stats.dsaProgress.inProgress, stats.dsaTotal) }}
                           title={`${stats.dsaProgress.inProgress} in progress`}
@@ -207,7 +213,7 @@ export default function Dashboard() {
                         {/* Not Started (implicit: fills remaining space) */}
                       </div>
                     </div>
-                    
+
                     {/* Legend */}
                     <div className="flex justify-between text-xs text-gray-400">
                       <span className="flex items-center gap-1">

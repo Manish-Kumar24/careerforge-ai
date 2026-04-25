@@ -13,8 +13,6 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
             res.status(401).json({ error: "Unauthorized: Invalid token payload" });
             return;
         }
-
-        // ✅ Parallel aggregation for performance
         const [
             applicationsCount,
             applicationBreakdown,
@@ -23,7 +21,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         ] = await Promise.all([
             // 1. Total applications count
             Application.countDocuments({ userId }),
-            
+
             // 2. Application status breakdown (for the Applications card)
             Application.aggregate([
                 { $match: { userId: new mongoose.Types.ObjectId(userId) } },
@@ -34,7 +32,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
                     }
                 }
             ]),
-            
+
             // 3. DSA progress breakdown (for the DSA card progress bar)
             PracticeProgress.aggregate([
                 { $match: { userId: new mongoose.Types.ObjectId(userId) } },
@@ -45,7 +43,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
                     }
                 }
             ]),
-            
+
             // 4. Total available DSA problems
             PracticeProblem.countDocuments({}) // ← Update filter if not all problems are DSA
         ]);
@@ -55,7 +53,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         applicationBreakdown.forEach((item: { _id: string; count: number }) => {
             appStatusMap[item._id] = item.count;
         });
-        
+
         // Calculate application success rate: (offers / total) * 100
         const offers = appStatusMap["offer"] || 0;
         const applicationSuccessRate = applicationsCount > 0
@@ -67,11 +65,11 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         dsaProgress.forEach((item: { _id: string; count: number }) => {
             dsaStatusMap[item._id] = item.count;
         });
-        
+
         const dsaCompleted = dsaStatusMap["completed"] || 0;
         const dsaInProgress = dsaStatusMap["in-progress"] || 0;
         const dsaNotStarted = totalProblems - dsaCompleted - dsaInProgress; // Remaining = total - attempted
-        
+
         // Calculate DSA success rate: (completed / total) * 100
         const dsaSuccessRate = totalProblems > 0
             ? Math.round((dsaCompleted / totalProblems) * 100)
@@ -82,7 +80,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
             applications: applicationsCount,
             applicationSuccessRate,
             applicationBreakdown: appStatusMap, // { offer: 2, rejected: 1, oa: 1, interview: 0, ... }
-            
+
             // DSA card data
             dsaSolved: dsaCompleted,
             dsaTotal: totalProblems,
@@ -92,7 +90,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
                 inProgress: dsaInProgress,
                 notStarted: Math.max(0, dsaNotStarted) // Ensure non-negative
             },
-            
+
             lastUpdated: new Date().toISOString()
         });
         return;
