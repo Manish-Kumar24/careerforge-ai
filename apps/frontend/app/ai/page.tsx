@@ -6,6 +6,9 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { formatDistanceToNow } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Mic, MicOff, Volume2, Pause, Square } from "lucide-react";
+import { useSpeechRecognition } from "../../hooks/useSpeechRecognition";
+import { useSpeechSynthesis } from "../../hooks/useSpeechSynthesis";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import jsPDF from "jspdf";
@@ -55,6 +58,11 @@ export default function AIPage() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const [activeSpeakingId, setActiveSpeakingId] = useState<string | null>(null);
+
+  const { isListening, transcript, error: sttError, start: startListening, stop: stopListening, isSupported: sttSupported, setTranscript } = useSpeechRecognition();
+  const { isSpeaking, isPaused, speak, pause, resume, cancel } = useSpeechSynthesis();
+
   // Auto-scroll to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -86,6 +94,14 @@ export default function AIPage() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [input]);
+
+  useEffect(() => {
+    if (transcript) setInput(transcript);
+  }, [transcript]);
+
+  useEffect(() => {
+    return () => { cancel(); setActiveSpeakingId(null); };
+  }, [cancel]);
 
   const send = useCallback(async () => {
     if (!input.trim() || loading) return;
@@ -210,6 +226,16 @@ export default function AIPage() {
     // TODO: Send feedback to backend for model improvement
     // api.post("/ai/feedback", { messageId, type })
   }, []);
+
+  const handleSpeak = useCallback((text: string, msgId: string) => {
+    if (isSpeaking && activeSpeakingId === msgId) {
+      if (isPaused) resume(); else pause();
+    } else {
+      cancel();
+      setActiveSpeakingId(msgId);
+      speak(text);
+    }
+  }, [isSpeaking, isPaused, activeSpeakingId, speak, pause, resume, cancel]);
 
   // ✅ Export chat as Markdown text (reliable, no canvas issues)
   const exportChat = useCallback(async () => {
@@ -490,7 +516,21 @@ ${msg.a}
                         </div>
                         <p className="font-medium text-xs text-gray-600 dark:text-gray-400">AI Assistant</p>
                       </div>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">{formatTime(msg.timestamp)}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">{formatTime(msg.timestamp)}</p>
+                        {/* 🔊 TTS Button - NEW */}
+                        <button
+                          onClick={() => handleSpeak(msg.a, msg.id)}
+                          disabled={!msg.a} // Only enable if there's content
+                          className={`p-1.5 rounded-md transition-colors ${activeSpeakingId === msg.id
+                            ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                            : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            } disabled:opacity-40`}
+                          title={activeSpeakingId === msg.id ? (isPaused ? "Resume" : "Pause") : "Listen"}
+                        >
+                          {activeSpeakingId === msg.id ? (isPaused ? <Volume2 className="w-4 h-4" /> : <Pause className="w-4 h-4" />) : <Volume2 className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
 
                     {/* Response Content or Loading State */}
@@ -541,6 +581,14 @@ ${msg.a}
                         >
                           <ThumbsDown className="w-3.5 h-3.5" />
                           <span>{msg.reactions?.dislikes || 0}</span>
+                        </button>
+                      </div>
+                    )}
+                    {/* Stop button when speaking - NEW */}
+                    {activeSpeakingId === msg.id && msg.a && (
+                      <div className="px-4 pb-3">
+                        <button onClick={cancel} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600 font-medium">
+                          <Square className="w-3 h-3" /> Stop Reading
                         </button>
                       </div>
                     )}
@@ -603,13 +651,13 @@ ${msg.a}
         <div className="flex-shrink-0 p-4 border-t border-gray-200/80 dark:border-gray-800/80 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
           {/* ✅ FIX: Changed max-w-4xl to max-w-5xl, gap-3 to gap-2 for tighter spacing */}
           <div className="flex gap-2 w-full max-w-5xl mx-auto items-end">
-            <div className="relative flex-1 min-w-0"> {/* ✅ Added min-w-0 to prevent flex shrinking */}
+            <div className="relative flex-1 min-w-0">
               <Input
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask me anything... (Shift+Enter for new line)"
+                placeholder={isListening ? "Listening... Speak now" : "Ask me anything... (Shift+Enter for new line)"}
                 disabled={loading}
                 onFocus={() => setShowToolbar(true)}
                 onBlur={() => setTimeout(() => setShowToolbar(false), 200)}
@@ -622,6 +670,18 @@ ${msg.a}
                  focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
                  transition-all duration-200"
               />
+              {/* 🎤 Mic Button - NEW */}
+              <button
+                onClick={isListening ? stopListening : startListening}
+                disabled={!sttSupported || loading}
+                className={`absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-all ${isListening
+                  ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 animate-pulse"
+                  : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400"
+                  } disabled:opacity-40`}
+                title={isListening ? "Stop listening" : "Start voice input"}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
               {/* Toolbar toggle hint */}
               <button
                 onClick={() => setShowToolbar(!showToolbar)}
@@ -650,6 +710,8 @@ ${msg.a}
               )}
             </Button>
           </div>
+          {/* Show STT unsupported warning if needed */}
+          {!sttSupported && <p className="text-xs text-yellow-600 dark:text-yellow-400 text-center mt-2">⚠️ Voice input not supported in this browser. Try Chrome/Edge.</p>}
           <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-3">
             Press <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-[10px]">Enter</kbd> to send •
             <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-[10px] mx-0.5">Shift+Enter</kbd> for new line •
