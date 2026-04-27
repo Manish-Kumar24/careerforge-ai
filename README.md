@@ -103,3 +103,55 @@ cp .env.example .env
 # Start development server
 npm run dev
 ```
+
+### Backend runs on: http://localhost:5000
+
+### 3. Setup Frontend
+
+```bash
+cd apps/frontend
+
+# Install dependencies
+npm install
+
+# Copy environment template
+cp .env.example .env.local
+
+# Edit .env.local:
+# - NEXT_PUBLIC_API_URL: http://localhost:5000/api
+
+# Start development server
+npm run dev
+```
+
+### Frontend runs on: http://localhost:3000
+
+### 📂 Project Structure
+```bash
+apps/
+├── backend/
+│   ├── src/
+│   │   ├── controllers/      # Request handlers (Auth, Interview, Resume)
+│   │   ├── models/           # Mongoose schemas
+│   │   ├── routes/           # API endpoints
+│   │   ├── services/         # Business logic (AI Orchestrator, Parsers)
+│   │   └── config/           # DB connection, Templates
+│   └── server.ts             # Entry point
+├── frontend/
+│   ├── app/                  # Next.js App Router pages
+│   │   ├── interview/        # Mock Interview flows
+│   │   ├── resume-analyzer/  # ATS Analysis UI
+│   │   └── dashboard/        # Analytics & Tracking
+│   ├── components/           # Reusable UI components
+│   ├── features/             # Feature-specific logic & hooks
+│   ├── hooks/                # Custom hooks (STT, TTS, AutoSave)
+│   └── store/                # Zustand state management
+```
+
+### 📝 License
+#### This project is licensed under the MIT License - see the LICENSE file for details.
+
+### 🙏 Acknowledgments
+#### Groq for ultra-fast inference capabilities.
+#### Next.js team for the incredible App Router framework.
+#### Recharts for beautiful, composable charts.
