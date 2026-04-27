@@ -81,3 +81,25 @@ A comprehensive, AI-powered career acceleration platform. Track job applications
 ```bash
 git clone https://github.com/yourusername/careerforge-ai.git
 cd careerforge-ai
+```
+
+### 2. Setup Backend
+
+```bash
+cd apps/backend
+
+# Install dependencies
+npm install
+
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your actual values:
+# - MONGODB_URI: Your MongoDB Atlas connection string
+# - JWT_SECRET: Generate with `openssl rand -hex 32`
+# - GROQ_API_KEY: Your Groq API key
+# - PORT: 5000 (default)
+
+# Start development server
+npm run dev
+```
