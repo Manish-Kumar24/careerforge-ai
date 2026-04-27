@@ -6,7 +6,7 @@ Practice voice-enabled mock interviews, optimize your resume with ATS analysis, 
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20App-6366f1?style=for-the-badge&logo=vercel&logoColor=white)](https://careerforge-ai-frontend-omega.vercel.app/)
 
-![CareerForge AI](./public/og-image.png)
+![CareerForge AI](./apps/frontend/public/og-image.png)
 
 ---
 
