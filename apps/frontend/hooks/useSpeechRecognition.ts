@@ -25,6 +25,8 @@ export function useSpeechRecognition() {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognitionRef.current = new SpeechRecognition();
+    
+    // ✅ Use same config as working AI Chat: continuous=false for reliability
     recognitionRef.current.continuous = false;
     recognitionRef.current.interimResults = true;
     recognitionRef.current.lang = "en-US";
@@ -46,6 +48,7 @@ export function useSpeechRecognition() {
       } else if (event.error !== "no-speech" && event.error !== "aborted") {
         setError(`Speech recognition error: ${event.error}`);
       }
+      // ✅ "no-speech" and "aborted" are normal - ignore silently
     };
 
     recognitionRef.current.onend = () => setIsListening(false);
@@ -59,7 +62,7 @@ export function useSpeechRecognition() {
       return;
     }
     setError(null);
-    setTranscript("");
+    setTranscript(""); // ✅ Clear transcript on start (like AI Chat)
     try {
       recognitionRef.current?.start();
       setIsListening(true);
